@@ -3,7 +3,8 @@ import User from '../models/User.js';
 import { hashPassword, comparePassword } from '../utils/passwordUtils.js';
 import { UnauthenticatedError, BadRequestError } from '../errors/customError.js';
 import { createJWT } from '../utils/tokenUtils.js';
-
+import {generateCookieOptions} from '../utils/cookieUtils.js';
+import { StatusCodes } from 'http-status-codes';
 export const register = async (req, res, next) => {
   try {
     const { email, password, mobile_number } = req.body;
@@ -25,7 +26,7 @@ export const register = async (req, res, next) => {
     });
 
     const token = createJWT({ id: newUser.id, email: newUser.email });
-
+     
     res.status(201).json({
       message: 'User registered successfully',
       user: { id: newUser.id, email: newUser.email },
@@ -57,11 +58,12 @@ export const login = async (req, res, next) => {
       }
   
       const token = createJWT({ id: user.id, email: user.email });
-  
-      res.status(200).json({
-        message: 'Login successful',
-        user: { id: user.id, email: user.email },
-        token,
+      const cookieName = "project-indoor-ooh"
+      const cookieOptions = generateCookieOptions();
+      res.cookie(cookieName, token, cookieOptions);
+      res.status(StatusCodes.OK).json({
+        message: 'User logged in successfully',
+        success: true,
       });
     } catch (error) {
       next(error);
