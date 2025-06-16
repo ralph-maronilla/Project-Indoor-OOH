@@ -1,35 +1,48 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { Outlet } from 'react-router';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import createCustomTheme from './theme';
+import Sidebar from './components/navigation/Sidebar';
+import { Box } from '@mui/material';
+import { useAuthStore } from './store/authStore';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [mode, setMode] = useState('dark'); // Manage light/dark mode state
+  const theme = createCustomTheme(mode); // Dynamically create theme based on mode
+  const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    console.log('is authenticated: ', isAuthenticated);
+  }, [isAuthenticated]);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ThemeProvider theme={theme}>
+      <CssBaseline /> {/* Adds consistent global styles */}
+      <Box
+        sx={{
+          display: 'flex',
+          height: '100vh',
+          backgroundColor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+        }}
+      >
+        <Sidebar mode={mode} setMode={setMode} />
+
+        {/* Main content */}
+        <Box
+          sx={{
+            flex: 1,
+            p: 2,
+            overflowY: 'auto',
+            backgroundColor: theme.palette.background.default,
+          }}
+        >
+          <Outlet />
+        </Box>
+      </Box>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
