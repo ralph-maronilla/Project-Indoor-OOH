@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import {
   Drawer,
@@ -31,6 +31,11 @@ function Sidebar({ mode, setMode }) {
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const location = useLocation(); // Get the current path
+  const currentPath = location.pathname;
+
+  const isActive = (path) => currentPath === path;
 
   const toggleDrawer = () => {
     setOpen((prev) => !prev);
@@ -83,7 +88,7 @@ function Sidebar({ mode, setMode }) {
             color: theme.palette.primary.main,
             textAlign: 'center',
             padding: 2,
-            marginLeft: { xs: '1rem' },
+            marginLeft: { xs: '1rem', md: 0 },
           }}
         >
           Project Indoor OOH
@@ -104,7 +109,15 @@ function Sidebar({ mode, setMode }) {
             <ListItem
               button
               onClick={() => navigate('/')}
-              sx={{ cursor: 'pointer' }}
+              sx={{
+                cursor: 'pointer',
+                backgroundColor: isActive('/')
+                  ? theme.palette.background.default
+                  : 'inherit',
+                '&:hover': {
+                  backgroundColor: theme.palette.background.default,
+                },
+              }}
             >
               <ListItemIcon>
                 <HomeIcon sx={{ color: theme.palette.primary.main }} />
@@ -114,13 +127,21 @@ function Sidebar({ mode, setMode }) {
 
             <ListItem
               button
-              onClick={() => navigate('/login')}
-              sx={{ cursor: 'pointer' }}
+              onClick={() => navigate('/media')}
+              sx={{
+                cursor: 'pointer',
+                backgroundColor: isActive('/media')
+                  ? theme.palette.background.default
+                  : 'inherit',
+                '&:hover': {
+                  backgroundColor: theme.palette.background.default,
+                },
+              }}
             >
               <ListItemIcon>
                 <MmsIcon sx={{ color: theme.palette.primary.main }} />
               </ListItemIcon>
-              <ListItemText primary='Photos' />
+              <ListItemText primary='Media' />
             </ListItem>
           </List>
 
