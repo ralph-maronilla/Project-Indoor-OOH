@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { use } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import {
   Box,
@@ -9,6 +10,8 @@ import {
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import { Formik } from 'formik';
+import { useApiStore } from '../store/apiStore';
+import { useAuthStore } from '../store/authStore';
 
 const loginInitialValues = {
   email: '',
@@ -22,8 +25,37 @@ const loginValidationSchema = Yup.object().shape({
 
 const Login = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
+  const { apiUrls } = useApiStore();
+  const { isAuthenticated, setIsAuthenticated, login } = useAuthStore();
   const handleLoginSubmit = async (values) => {
     console.log('Login submitted:', values);
+    try {
+      console.log(apiUrls.login);
+      const response = await fetch(apiUrls.login, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+      console.log('Login response:', data);
+      setIsAuthenticated(true);
+
+      // Update Zustand store
+
+      // login(data.user, data.token);
+
+      navigate('/');
+    } catch (error) {
+      console.error('Login error:', error);
+    }
   };
   return (
     <Box

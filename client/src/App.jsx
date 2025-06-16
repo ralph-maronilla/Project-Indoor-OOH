@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import createCustomTheme from './theme';
 import Sidebar from './components/navigation/Sidebar';
 import { Box } from '@mui/material';
+import { useAuthStore } from './store/authStore';
 
 function App() {
   const [mode, setMode] = useState('dark'); // Manage light/dark mode state
   const theme = createCustomTheme(mode); // Dynamically create theme based on mode
+  const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    console.log('is authenticated: ', isAuthenticated);
+  }, [isAuthenticated]);
 
   return (
     <ThemeProvider theme={theme}>
