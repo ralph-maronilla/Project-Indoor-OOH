@@ -6,24 +6,26 @@ import App from './App.jsx';
 import ErrorPage from './pages/ErrorPage.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import Media from './pages/Media.jsx';
+import Home from './pages/Home.jsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
     errorElement: <ErrorPage />,
-    // children: [
-    //   {
-    //     path: '/login',
-    //     element: <Login />,
-    //     errorElement: <ErrorPage />,
-    //   },
-    //   {
-    //     path: '/register',
-    //     element: <Register />,
-    //     errorElement: <ErrorPage />,
-    //   },
-    // ],
+    children: [
+      {
+        path: '/',
+        element: <Home />,
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: '/media',
+        element: <Media />,
+        errorElement: <ErrorPage />,
+      },
+    ],
   },
   {
     path: '/login',

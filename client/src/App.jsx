@@ -36,6 +36,11 @@ function App() {
             p: 2,
             overflowY: 'auto',
             backgroundColor: theme.palette.background.default,
+            color: theme.palette.text.primary,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
         >
           <Outlet />
