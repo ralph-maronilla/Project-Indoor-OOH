@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import cors from "cors";
+import imageRoutes from './routes/imageRoute.js';
 
 const app = express();
 
@@ -29,6 +30,8 @@ app.use(
 );
 
 // Routes
+app.use('/api/v1/images', imageRoutes);
+
 app.use("/api/v1/auth", authRoutes);
 
 // Custom Error Handler
