@@ -96,7 +96,7 @@ export const uploadImages = [
           const saved = await UploadedImage.query().insert({
             filename: file.originalname,
             mime_type: file.mimetype,
-            image_data: file.buffer, // 🔥 No compression — use original buffer
+            image_data: file.buffer,
             user_id: req.user?.id ?? null,
             image_exif_data: exifString,
           });
@@ -109,7 +109,6 @@ export const uploadImages = [
           };
         })
       );
-
       res.status(201).json({
         message: 'Images uploaded and saved.',
         data: savedImages,
@@ -136,7 +135,6 @@ export const getImages = async (req, res) => {
         let base64 = null;
   
         if (img.imageData) {
-          // Ensure it's a Node.js Buffer before converting to base64
           const buffer = Buffer.from(img.imageData);
           base64 = `data:${img.mimeType};base64,${buffer.toString('base64')}`;
         }
