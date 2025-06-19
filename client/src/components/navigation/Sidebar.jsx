@@ -112,10 +112,10 @@ function Sidebar({ mode, setMode }) {
               sx={{
                 cursor: 'pointer',
                 backgroundColor: isActive('/')
-                  ? theme.palette.background.default
+                  ? theme.palette.hover.primary
                   : 'inherit',
                 '&:hover': {
-                  backgroundColor: theme.palette.background.default,
+                  backgroundColor: theme.palette.hover.primary,
                 },
               }}
             >
@@ -131,10 +131,10 @@ function Sidebar({ mode, setMode }) {
               sx={{
                 cursor: 'pointer',
                 backgroundColor: isActive('/media')
-                  ? theme.palette.background.default
+                  ? theme.palette.hover.primary
                   : 'inherit',
                 '&:hover': {
-                  backgroundColor: theme.palette.background.default,
+                  backgroundColor: theme.palette.hover.primary,
                 },
               }}
             >

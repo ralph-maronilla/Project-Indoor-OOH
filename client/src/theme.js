@@ -35,11 +35,15 @@ const createCustomTheme = (mode) =>
             },
             background: {
               default: colors.light[850],
-              paper: colors.light[900],
+              paper: colors.light[800],
             },
             text: {
               primary: colors.dark[200],
               secondary: colors.dark[500],
+            },
+            hover: {
+              primary: colors.light[700],
+              secondary: colors.light[500],
             },
           }
         : {
@@ -54,6 +58,10 @@ const createCustomTheme = (mode) =>
             text: {
               primary: colors.light[900],
               secondary: colors.light[200],
+            },
+            hover: {
+              primary: colors.dark[300],
+              secondary: colors.dark[400],
             },
           }),
     },
