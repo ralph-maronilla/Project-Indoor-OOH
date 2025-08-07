@@ -1,9 +1,13 @@
 import { Box, Typography, Button } from '@mui/material';
 import React, { useState } from 'react';
 import { useTheme } from '@mui/material/styles';
+import { useApiStore } from '../store/apiStore';
 
 const Media = () => {
   const theme = useTheme();
+  const apiUrls = useApiStore((state) => state.apiUrls);
+  const { uploadImages } = apiUrls;
+
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleFileChange = (event) => {
@@ -12,10 +16,29 @@ const Media = () => {
     console.log('Files selected:', files);
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (selectedFiles.length > 0) {
-      console.log('Uploading files:', selectedFiles);
-      // Add your upload logic here
+      const formData = new FormData();
+      selectedFiles.forEach((file) => {
+        formData.append('images', file); // Match the backend's expected field name
+      });
+
+      try {
+        const response = await fetch(uploadImages, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Upload successful:', data);
+      } catch (error) {
+        console.error('Error during file upload:', error);
+      }
     } else {
       alert('Please select files to upload');
     }
@@ -42,7 +65,8 @@ const Media = () => {
           border: '2px dashed #ccc',
           borderRadius: '8px',
           width: '600px',
-          backgroundColor: theme.palette.background.default,
+          backgroundColor: theme.palette.background.paper,
+          //   opacity: 0.8,
           color: theme.palette.text.primary,
         }}
       >
