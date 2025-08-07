@@ -11,7 +11,7 @@ import {
 import Button from '@mui/material/Button';
 import { Formik } from 'formik';
 import { useApiStore } from '../store/apiStore';
-import { useAuthStore } from '../store/authStore';
+import { useAppStateStore } from '../store/authStore';
 
 const loginInitialValues = {
   email: '',
@@ -27,7 +27,7 @@ const Login = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { apiUrls } = useApiStore();
-  const { isAuthenticated, setIsAuthenticated, login } = useAuthStore();
+  const { isAuthenticated, setIsAuthenticated, login } = useAppStateStore();
   const handleLoginSubmit = async (values) => {
     console.log('Login submitted:', values);
     try {

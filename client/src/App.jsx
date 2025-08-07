@@ -5,14 +5,13 @@ import CssBaseline from '@mui/material/CssBaseline';
 import createCustomTheme from './theme';
 import Sidebar from './components/navigation/Sidebar';
 import { Box } from '@mui/material';
-import { useAuthStore } from './store/authStore';
-import { useAppStateStore } from "./stores/appState";
-import { useApiStore } from "./stores/apiStore";
+import { useAppStateStore } from "../src/store/authStore";
+import { useApiStore } from "../src/store/apiStore";
 
 function App() {
   const [mode, setMode] = useState('dark'); // Manage light/dark mode state
   const theme = createCustomTheme(mode); // Dynamically create theme based on mode
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAppStateStore();
    const [isTokenChecked, setIsTokenChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
