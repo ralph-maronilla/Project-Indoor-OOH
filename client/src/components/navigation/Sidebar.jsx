@@ -105,7 +105,26 @@ function Sidebar({ mode, setMode }) {
           }}
         >
           {/* Navigation List */}
+
           <List>
+            <ListItem
+              button
+              onClick={() => navigate('/admin')}
+              sx={{
+                cursor: 'pointer',
+                backgroundColor: isActive('/admin')
+                  ? theme.palette.hover.primary
+                  : 'inherit',
+                '&:hover': {
+                  backgroundColor: theme.palette.hover.primary,
+                },
+              }}
+            >
+              <ListItemIcon>
+                <HomeIcon sx={{ color: theme.palette.primary.main }} />
+              </ListItemIcon>
+              <ListItemText primary='Admin' />
+            </ListItem>
             <ListItem
               button
               onClick={() => navigate('/')}
@@ -162,7 +181,7 @@ function Sidebar({ mode, setMode }) {
               }}
             >
               <Typography variant='body2' sx={{ mr: 1 }}>
-                Dark Mode
+                {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
               </Typography>
               <Switch
                 checked={mode === 'dark'}
