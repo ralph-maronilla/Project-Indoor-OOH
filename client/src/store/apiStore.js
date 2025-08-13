@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
 // // Development
-const BASE_URL = 'http://localhost:8044';
+// const BASE_URL = 'http://localhost:8044';
 
 // Production
-// const BASE_URL = "";
+const BASE_URL = "";
 
 const useApiStore = create((set) => ({
   apiUrls: {

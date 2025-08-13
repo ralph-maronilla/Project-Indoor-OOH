@@ -23,11 +23,17 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "http://portal.davidandgolyat.com:7110",
+      "http://portal.davidandgolyat.com:7110/"
+
+    ],
     credentials: true,
     exposedHeaders: ["Content-Disposition", "Content-Type"],
   })
 );
+
 
 // Routes
 app.use('/api/v1/images', imageRoutes);

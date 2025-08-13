@@ -1,6 +1,6 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-export const useAuthStore = create((set) => ({
+export const useAppStateStore = create((set) => ({
   isAuthenticated: false,
   authUser: null,
 
@@ -9,15 +9,13 @@ export const useAuthStore = create((set) => ({
 
   resetIsAuthenticated: () => set({ isAuthenticated: false }),
   resetAuthUser: () => set({ authUser: null }),
-  login: (user, token) => {
-    set({ isAuthenticated: true, authUser: user, token });
-    localStorage.setItem('authUser', JSON.stringify(user));
-    localStorage.setItem('token', token);
-  },
 
-  logout: () => {
-    set({ isAuthenticated: false, authUser: null, token: null });
-    localStorage.removeItem('authUser');
-    localStorage.removeItem('token');
-  },
+  portalCheckAuthUrl:
+    "http://portal.davidandgolyat.com:7777/dng-google-user-portal/api/v1/auth/system/check-auth",
+  portalUrl: "http://portal.davidandgolyat.com:7777/login",
+
+  // portalUrl: "http://portal.davidandgolyat.com:7777/login",
+  // portalCheckAuthUrl:
+  //   "http://localhost:8038/dng-google-user-portal/api/v1/auth/google/callback/admin",
+  // portalUrl: "http://localhost:5173/login",
 }));
