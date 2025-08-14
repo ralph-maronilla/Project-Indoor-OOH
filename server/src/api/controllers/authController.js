@@ -38,6 +38,11 @@ export const register = async (req, res, next) => {
       mime_type: mimeType
     });
 
+    if(!newUser.role)
+    {
+      newUser.role = 'user';
+    }
+
     const token = createJWT({ id: newUser.id, email: newUser.email });
      const base64Image = Buffer.from(imageBlob).toString('base64');
     const user_image = `data:${mimeType};base64,${base64Image}`;
