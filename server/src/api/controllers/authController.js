@@ -5,10 +5,16 @@ import { UnauthenticatedError, BadRequestError } from '../errors/customError.js'
 import { createJWT } from '../utils/tokenUtils.js';
 import {generateCookieOptions} from '../utils/cookieUtils.js';
 import { StatusCodes } from 'http-status-codes';
-export const register = async (req, res, next) => {
-  try {
-    const { email, password, mobile_number } = req.body;
 
+
+export const register = async (req, res, next) => {
+
+
+  try {
+
+
+    const { email, password, mobile_number,first_name,last_name,role } = req.body;
+    console.log(req.body);
     if (!email || !password) {
       throw new BadRequestError('Email and password are required');
     }
@@ -18,22 +24,33 @@ export const register = async (req, res, next) => {
       throw new BadRequestError('User already exists');
     }
 
+    const imageBlob = req.file.buffer;
+    const mimeType = req.file.mimetype;
     const hashedPassword = await hashPassword(password);
     const newUser = await User.query().insert({
       email,
       password: hashedPassword,
       mobile_number,
+      first_name,
+      last_name,
+      role,
+      user_image: imageBlob,
+      mime_type: mimeType
     });
 
     const token = createJWT({ id: newUser.id, email: newUser.email });
-     
+     const base64Image = Buffer.from(imageBlob).toString('base64');
+    const user_image = `data:${mimeType};base64,${base64Image}`;
     res.status(201).json({
       message: 'User registered successfully',
-      user: { id: newUser.id, email: newUser.email },
+      user: { id: newUser.id, email: newUser.email, role: newUser.role, 
+        first_name: newUser.first_name, last_name: newUser.last_name , 
+        mobile_number: newUser.mobile_number , user_image: user_image },
       token,
     });
   } catch (error) {
     next(error);
+  
   }
 };
 
@@ -60,10 +77,19 @@ export const login = async (req, res, next) => {
       const token = createJWT({ id: user.id, email: user.email });
       const cookieName = "project-indoor-ooh"
       const cookieOptions = generateCookieOptions();
+      let user_image = null;
+      if(user.userImage){
+        const base64Image = Buffer.from(user.userImage).toString('base64');
+        user_image = `data:${user.mime_type};base64,${base64Image}`;
+      }
+  
       res.cookie(cookieName, token, cookieOptions);
       res.status(StatusCodes.OK).json({
         message: 'User logged in successfully',
         success: true,
+        user: { id: user.id, email: user.email, role: user.role, 
+          first_name: user.firstName, last_name: user.lastName , 
+          mobile_number: user.mobileNumber , user_image: user_image },
       });
     } catch (error) {
       next(error);

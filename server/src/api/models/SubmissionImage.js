@@ -3,6 +3,8 @@ import BaseModel from './BaseModel.js';
 import Submission from '../models/Submission.js';
 import UploadedImage from '../models/UploadedImage.js';
 
+
+
 class SubmissionImage extends BaseModel {
   static get tableName() {
     return 'submission_image_table';
