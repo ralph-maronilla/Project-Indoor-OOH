@@ -186,7 +186,7 @@ export const uploadSubmissionWithImages = [
             filename: file.originalname,
             mime_type: file.mimetype,
             image_data: file.buffer,
-            user_id: req.user?.id ?? null,
+            user_id: parseInt(submitted_by, 10) ?? null,
             image_exif_data: exifString,
           });
 
@@ -217,9 +217,59 @@ export const uploadSubmissionWithImages = [
   },
 ];
 
+export const getImagesByUserId = async (req, res) => {
+
+  
+    try {
+      // Select required fields including the BLOB
+      const userId = req.params.id;
+      const images = await UploadedImage.query().select(
+        'id',
+        'filename',
+        'mime_type',
+        'image_data',
+        'image_exif_data'
+      ).where('user_id', userId)
+      ;
+  
+      const formatted = images.map(img => {
+        let base64 = null;
+  
+        if (img.imageData) {
+          const buffer = Buffer.from(img.imageData);
+          base64 = `data:${img.mimeType};base64,${buffer.toString('base64')}`;
+        }
+  
+        let parsedExif = null;
+        try {
+          parsedExif = img.imageExifData ? JSON.parse(img.imageExifData) : null;
+        } catch (parseErr) {
+          console.warn(`Failed to parse EXIF for image ${img.id}:`, parseErr.message);
+        }
+  
+        return {
+          id: img.id,
+          filename: img.filename,
+          exif: parsedExif,
+          imageBase64: base64,
+        };
+      });
+  
+      res.status(200).json({
+        message: 'Images retrieved successfully.',
+        data: formatted,
+      });
+  
+    } catch (err) {
+      console.error('Error fetching images:', err);
+      res.status(500).json({ error: 'Failed to fetch images' });
+    }
+  };
+  
 
 
 export const getImages = async (req, res) => {
+
     try {
       // Select required fields including the BLOB
       const images = await UploadedImage.query().select(
