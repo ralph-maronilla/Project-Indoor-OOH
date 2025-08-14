@@ -24,8 +24,14 @@ export const register = async (req, res, next) => {
       throw new BadRequestError('User already exists');
     }
 
-    const imageBlob = req.file.buffer;
-    const mimeType = req.file.mimetype;
+    let imageBlob = null;
+    let mimeType = null;
+    if(req.file)
+    {
+     imageBlob = req.file.buffer;
+     mimeType = req.file.mimetype;
+    }
+
     const hashedPassword = await hashPassword(password);
     const newUser = await User.query().insert({
       email,
@@ -44,8 +50,11 @@ export const register = async (req, res, next) => {
     }
 
     const token = createJWT({ id: newUser.id, email: newUser.email });
+    let user_image = null;
+       if(imageBlob){
      const base64Image = Buffer.from(imageBlob).toString('base64');
-    const user_image = `data:${mimeType};base64,${base64Image}`;
+     user_image = `data:${mimeType};base64,${base64Image}`;
+       }
     res.status(201).json({
       message: 'User registered successfully',
       user: { id: newUser.id, email: newUser.email, role: newUser.role, 
