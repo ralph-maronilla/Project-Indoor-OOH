@@ -10,12 +10,13 @@ import { useTheme } from '@mui/material/styles';
 import { useApiStore } from '../store/apiStore';
 import { useMediaStore } from '../store/mediaStore';
 import ImageDataTable from '../components/media/ImageDataTable';
+import { useMutation } from '@tanstack/react-query';
 
 const Media = () => {
   const theme = useTheme();
   const apiUrls = useApiStore((state) => state.apiUrls);
   const { uploadImages } = apiUrls;
-  const { isLoading, setIsLoading } = useMediaStore();
+  const { isLoading: storeLoading, setIsLoading } = useMediaStore();
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [imageData, setImageData] = useState([]);
@@ -26,53 +27,64 @@ const Media = () => {
     console.log('Files selected:', files);
   };
 
-  const handleUpload = async () => {
-    try {
-      setIsLoading(true);
-      if (selectedFiles.length > 0) {
-        const formData = new FormData();
-        selectedFiles.forEach((file) => {
-          formData.append('images', file); // Match the backend's expected field name
-        });
+  // Mutation function
+  const uploadFiles = async (files) => {
+    if (!files.length) throw new Error('No files selected');
 
-        try {
-          const response = await fetch(uploadImages, {
-            method: 'POST',
-            body: formData,
-            credentials: 'include',
-          });
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('images', file);
+    });
+    formData.append('submitted_by', 1);
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+    const response = await fetch(uploadImages, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
 
-          const data = await response.json();
-          setImageData(data?.data);
-
-          console.log('Upload successful:', data);
-        } catch (error) {
-          console.error('Error during file upload:', error);
-        }
-      } else {
-        alert('Please select files to upload');
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    return response.json();
+  };
+
+  // React Query mutation
+  const { mutate, isLoading, isError, error } = useMutation({
+    mutationFn: uploadFiles,
+    onMutate: () => {
+      setIsLoading(true);
+    },
+    onSuccess: (data) => {
+      setImageData(data?.data || []);
+      console.log('Upload successful:', data);
+    },
+    onError: (err) => {
+      console.error('Upload failed:', err.message);
+    },
+    onSettled: () => {
+      setIsLoading(false);
+    },
+  });
+
+  const handleUpload = () => {
+    mutate(selectedFiles);
   };
 
   return (
     <>
+      {/* Loader */}
       <Box sx={{ width: '100%' }}>
         <Backdrop
           sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-          open={isLoading}
+          open={storeLoading}
         >
           <CircularProgress color='inherit' />
         </Backdrop>
       </Box>
+
+      {/* Upload Box */}
       <Box
         sx={{
           display: 'flex',
@@ -94,7 +106,6 @@ const Media = () => {
             borderRadius: '8px',
             width: '600px',
             backgroundColor: theme.palette.background.paper,
-            //   opacity: 0.8,
             color: theme.palette.text.primary,
           }}
         >
@@ -108,9 +119,15 @@ const Media = () => {
             onChange={handleFileChange}
             style={{ marginBottom: '16px' }}
           />
-          <Button variant='contained' color='primary' onClick={handleUpload}>
-            Upload
+          <Button
+            variant='contained'
+            color='primary'
+            onClick={handleUpload}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Uploading...' : 'Upload'}
           </Button>
+
           {selectedFiles.length > 0 && (
             <Box sx={{ mt: 2 }}>
               <Typography variant='body2' sx={{ mb: 1 }}>
@@ -123,12 +140,18 @@ const Media = () => {
               </ul>
             </Box>
           )}
+
+          {isError && (
+            <Typography color='error' sx={{ mt: 2 }}>
+              Error: {error.message}
+            </Typography>
+          )}
         </Box>
       </Box>
+
+      {/* Uploaded Images Table */}
       <Box sx={{ width: '70%', height: '500px' }}>
-        {imageData && imageData.length > 0 && (
-          <ImageDataTable data={imageData} />
-        )}
+        {imageData.length > 0 && <ImageDataTable data={imageData} />}
       </Box>
     </>
   );

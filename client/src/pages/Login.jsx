@@ -28,6 +28,28 @@ const Login = () => {
   const navigate = useNavigate();
   const { apiUrls } = useApiStore();
   const { isAuthenticated, setIsAuthenticated, login } = useAppStateStore();
+  // const handleLoginSubmit = async (values) => {
+  //   try {
+  //     const response = await fetch(apiUrls.login, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       credentials: 'include', // So server sets HTTP-only cookie
+  //       body: JSON.stringify(values),
+  //     });
+
+  //     if (!response.ok) throw new Error('Login failed');
+
+  //     const data = await response.json();
+  //     console.log('Login response:', data);
+
+  //     // Store user in Zustand
+  //     // Save user to Zustand
+  //     useAppStateStore.getState().login(data.user);
+  //     // navigate('/');
+  //   } catch (error) {
+  //     console.error('Login error:', error);
+  //   }
+  // };
   const handleLoginSubmit = async (values) => {
     console.log('Login submitted:', values);
     try {
@@ -53,7 +75,7 @@ const Login = () => {
 
       // login(data.user, data.token);
 
-      navigate('/');
+      // navigate('/');
     } catch (error) {
       console.error('Login error:', error);
     }
