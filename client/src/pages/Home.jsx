@@ -1,21 +1,23 @@
 import { Backdrop, Box, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CardItem from '../components/dashboard/CardItem';
 import AllImageTable from '../components/media/AllImageTable';
 import { useApiStore } from '../store/apiStore';
 import { useMediaStore } from '../store/mediaStore';
+import { useAppStateStore } from '../store/authStore';
 
 const Home = () => {
   const theme = useTheme();
   const apiUrls = useApiStore((state) => state.apiUrls);
-  const { getAllImages } = apiUrls;
+  const { authUser } = useAppStateStore((state) => state);
+  const { getAllImagesByUserId } = apiUrls;
   const { isLoading: storeLoading, setIsLoading } = useMediaStore();
 
   // Fetch function for React Query
   const fetchAllImages = async () => {
-    const response = await fetch(getAllImages);
+    const response = await fetch(`${getAllImagesByUserId}/${authUser?.id}`);
     if (!response.ok) {
       throw new Error('Failed to fetch images');
     }
@@ -43,9 +45,12 @@ const Home = () => {
   });
 
   // Sync React Query loading state with global store
-  React.useEffect(() => {
+  useEffect(() => {
     setIsLoading(queryLoading);
   }, [queryLoading, setIsLoading]);
+  useEffect(() => {
+    console.log('auth user', authUser);
+  });
 
   if (isError) {
     return <p>Error: {error.message}</p>;

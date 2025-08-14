@@ -23,11 +23,16 @@ import LoginIcon from '@mui/icons-material/Login';
 import MmsIcon from '@mui/icons-material/Mms';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import { useApiStore } from '../../store/apiStore';
+import { useAppStateStore } from '../../store/authStore';
 
 const drawerWidth = 240;
 
 function Sidebar({ mode, setMode }) {
   const [open, setOpen] = useState(true);
+  const apiUrls = useApiStore((state) => state.apiUrls);
+  const logout = useAppStateStore((state) => state.logout);
+  const authUser = useAppStateStore((state) => state.authUser);
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -44,7 +49,20 @@ function Sidebar({ mode, setMode }) {
   const handleToggleMode = () => {
     setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
-
+  const handleLogout = async () => {
+    try {
+      await fetch(apiUrls.logout, {
+        method: 'POST', // or GET if backend is set that way
+        credentials: 'include', // important for cookies
+      });
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    } finally {
+      logout(); // clears Zustand state
+      localStorage.removeItem('app-auth-store'); // optional if not using persist
+      navigate('/login'); // redirect
+    }
+  };
   return (
     <>
       {isSmallScreen && (
@@ -107,24 +125,28 @@ function Sidebar({ mode, setMode }) {
           {/* Navigation List */}
 
           <List>
-            <ListItem
-              button
-              onClick={() => navigate('/admin')}
-              sx={{
-                cursor: 'pointer',
-                backgroundColor: isActive('/admin')
-                  ? theme.palette.hover.primary
-                  : 'inherit',
-                '&:hover': {
-                  backgroundColor: theme.palette.hover.primary,
-                },
-              }}
-            >
-              <ListItemIcon>
-                <HomeIcon sx={{ color: theme.palette.primary.main }} />
-              </ListItemIcon>
-              <ListItemText primary='Admin' />
-            </ListItem>
+            {/* Show Admin link only if user is admin */}
+            {authUser?.role === 'admin' && (
+              <ListItem
+                button
+                onClick={() => navigate('/admin')}
+                sx={{
+                  cursor: 'pointer',
+                  backgroundColor: isActive('/admin')
+                    ? theme.palette.hover.primary
+                    : 'inherit',
+                  '&:hover': {
+                    backgroundColor: theme.palette.hover.primary,
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <HomeIcon sx={{ color: theme.palette.primary.main }} />
+                </ListItemIcon>
+                <ListItemText primary='Admin' />
+              </ListItem>
+            )}
+
             <ListItem
               button
               onClick={() => navigate('/')}
@@ -176,18 +198,24 @@ function Sidebar({ mode, setMode }) {
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'flex-end',
               }}
             >
-              <Typography variant='body2' sx={{ mr: 1 }}>
-                {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </Typography>
-              <Switch
-                checked={mode === 'dark'}
-                onChange={handleToggleMode}
-                color='primary'
-              />
+              <Button variant='text' onClick={handleLogout}>
+                Logout
+              </Button>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant='body2' sx={{ mr: 1 }}>
+                  {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                </Typography>
+                <Switch
+                  checked={mode === 'dark'}
+                  onChange={handleToggleMode}
+                  color='primary'
+                />
+              </Box>
             </Box>
           </Box>
         </Box>

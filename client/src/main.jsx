@@ -9,6 +9,7 @@ import Register from './pages/Register.jsx';
 import Media from './pages/Media.jsx';
 import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
+import ProtectedRoute from './components/navigation/ProtectedRoute.jsx';
 
 const router = createBrowserRouter([
   {
@@ -18,17 +19,29 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <Home />,
+        element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
         errorElement: <ErrorPage />,
       },
       {
         path: '/media',
-        element: <Media />,
+        element: (
+          <ProtectedRoute>
+            <Media />
+          </ProtectedRoute>
+        ),
         errorElement: <ErrorPage />,
       },
       {
         path: '/admin',
-        element: <Admin />,
+        element: (
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Admin />
+          </ProtectedRoute>
+        ),
         errorElement: <ErrorPage />,
       },
     ],
@@ -46,5 +59,4 @@ const router = createBrowserRouter([
 ]);
 
 const root = document.getElementById('root');
-
 ReactDOM.createRoot(root).render(<RouterProvider router={router} />);
