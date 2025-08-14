@@ -8,6 +8,7 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Media from './pages/Media.jsx';
 import Home from './pages/Home.jsx';
+import Admin from './pages/Admin.jsx';
 
 const router = createBrowserRouter([
   {
@@ -23,6 +24,11 @@ const router = createBrowserRouter([
       {
         path: '/media',
         element: <Media />,
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: '/admin',
+        element: <Admin />,
         errorElement: <ErrorPage />,
       },
     ],

@@ -11,6 +11,7 @@ const useApiStore = create((set) => ({
     login: `${BASE_URL}/api/v1/auth/login`,
     // retrieveRentalListings: `${BASE_URL}/rental-listing-scraper/api/v1/rental-listing/rental-listing`,
     uploadImages: `${BASE_URL}/api/v1/images/upload`,
+    getAllImages: `${BASE_URL}/api/v1/images/getImages`,
   },
 }));
 
