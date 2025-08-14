@@ -27,7 +27,6 @@ app.use(
       "http://localhost:5173",
       "http://portal.davidandgolyat.com:7110",
       "http://portal.davidandgolyat.com:7110/"
-
     ],
     credentials: true,
     exposedHeaders: ["Content-Disposition", "Content-Type"],

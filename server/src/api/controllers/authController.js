@@ -59,6 +59,26 @@ export const register = async (req, res, next) => {
   }
 };
 
+export const logout = async (req, res, next) => {
+  try {
+    const cookieName = "project-indoor-ooh";
+
+    res.cookie(cookieName, '', {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+      expires: new Date(0) 
+    });
+
+    res.status(StatusCodes.OK).json({
+      message: 'User logged out successfully',
+      success: true
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 export const login = async (req, res, next) => {
