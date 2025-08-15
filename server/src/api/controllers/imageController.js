@@ -126,20 +126,41 @@ async function reverseGeocode(lat, lon) {
 
 
 
-
 export const uploadSubmissionWithImages = [
   upload.array('images'),
 
   async (req, res) => {
     try {
-      // 1. Create the submission
       const { submitted_by } = req.body;
+
+      // 1. Loop through files first to check EXIF before saving anything
+      for (const file of req.files) {
+        let tags;
+        try {
+          const parser = exifParser.create(file.buffer);
+          const exifData = parser.parse();
+          tags = exifData.tags;
+        } catch (err) {
+          return res.status(400).json({
+            error: `No EXIF data found for ${file.originalname}. Submission not processed.`,
+          });
+        }
+
+        // If tags is empty or has no DateTimeOriginal/GPS data
+        if (!tags || Object.keys(tags).length === 0) {
+          return res.status(400).json({
+            error: `No EXIF data found for ${file.originalname}. Submission not processed.`,
+          });
+        }
+      }
+
+      // 2. Create submission first
       const submission = await Submission.query().insert({
-        submitted_by:  parseInt(submitted_by, 10) ?? null,
-        isApproved: false, // default
+        submitted_by: parseInt(submitted_by, 10) ?? null,
+        isApproved: false,
       });
 
-      // 2. Save each image and link to submission
+      // 3. Process and save each image
       const savedImages = await Promise.all(
         req.files.map(async (file) => {
           let imageInfo = {
@@ -151,37 +172,29 @@ export const uploadSubmissionWithImages = [
             exifData: null,
           };
 
-          try {
-            const parser = exifParser.create(file.buffer);
-            const exifData = parser.parse();
-            const tags = exifData.tags;
+          const parser = exifParser.create(file.buffer);
+          const exifData = parser.parse();
+          const tags = exifData.tags;
 
-            imageInfo.exifData = Object.fromEntries(
-              Object.entries(tags).filter(
-                ([_, v]) => typeof v !== 'object' && typeof v !== 'function'
-              )
-            );
+          imageInfo.exifData = Object.fromEntries(
+            Object.entries(tags).filter(
+              ([_, v]) => typeof v !== 'object' && typeof v !== 'function'
+            )
+          );
 
-            if (tags.GPSLatitude && tags.GPSLongitude) {
-              const lat = tags.GPSLatitude;
-              const lon = tags.GPSLongitude;
-              imageInfo.geolocation = { lat, lon };
-              imageInfo.locationName = await reverseGeocode(lat, lon);
-            }
+          if (tags.GPSLatitude && tags.GPSLongitude) {
+            const lat = tags.GPSLatitude;
+            const lon = tags.GPSLongitude;
+            imageInfo.geolocation = { lat, lon };
+            imageInfo.locationName = await reverseGeocode(lat, lon);
+          }
 
-            if (tags.DateTimeOriginal) {
-              imageInfo.dateTaken = formatToReadableUTC(tags.DateTimeOriginal);
-            }
-
-            console.log(`EXIF for ${file.originalname}:`, tags);
-            console.log(`Image info:`, imageInfo);
-          } catch (err) {
-            console.warn(`EXIF parse failed for ${file.originalname}:`, err.message);
+          if (tags.DateTimeOriginal) {
+            imageInfo.dateTaken = formatToReadableUTC(tags.DateTimeOriginal);
           }
 
           const exifString = JSON.stringify(imageInfo);
 
-          // Insert into uploaded_images
           const saved = await UploadedImage.query().insert({
             filename: file.originalname,
             mime_type: file.mimetype,
@@ -190,7 +203,6 @@ export const uploadSubmissionWithImages = [
             image_exif_data: exifString,
           });
 
-          // Link to submission
           await SubmissionImage.query().insert({
             submission_id: submission.id,
             image_id: saved.id,
@@ -315,44 +327,4 @@ export const getImages = async (req, res) => {
   };
   
 
-  export const getSubmissions = async (req, res) => {
-  try {
-  const submissions = await Submission.query()
-  .select('id', 'isApproved')
-  .withGraphFetched('images')
-  .modifyGraph('images', builder => {
-    builder.select(
-      'id',
-      'filename',
-      'mime_type',
-      'image_data',
-      'image_exif_data'
-    );
-  });
 
-
-    // Format images with base64 + parsed EXIF
-const formatted = submissions.map(sub => ({
-  id: sub.id,
-  isApproved: sub.isApproved,
-  images: sub.images.map(img => ({
-    id: img.id,
-    filename: img.filename,
-    exif: img.imageExifData
-   ? JSON.parse(img.imageExifData)
-  : null,
-    imageBase64: img.imageData
-      ? `data:${img.mimeType};base64,${Buffer.from(img.imageData).toString('base64')}`
-      : null,
-  })),
-}));
-
-    res.status(200).json({
-      message: 'Submissions retrieved successfully.',
-      data: formatted,
-    });
-  } catch (err) {
-    console.error('Error fetching submissions:', err);
-    res.status(500).json({ error: 'Failed to fetch submissions' });
-  }
-};

@@ -1,0 +1,97 @@
+import Submission from '../models/Submission.js';
+
+
+  export const getSubmissions = async (req, res) => {
+  try {
+  const submissions = await Submission.query()
+  .select('id', 'isApproved')
+  .withGraphFetched('images')
+  .modifyGraph('images', builder => {
+    builder.select(
+      'id',
+      'filename',
+      'mime_type',
+      'image_data',
+      'image_exif_data'
+    );
+  });
+
+
+    // Format images with base64 + parsed EXIF
+const formatted = submissions.map(sub => ({
+  id: sub.id,
+  isApproved: sub.isApproved,
+  images: sub.images.map(img => ({
+    id: img.id,
+    filename: img.filename,
+    exif: img.imageExifData
+   ? JSON.parse(img.imageExifData)
+  : null,
+    imageBase64: img.imageData
+      ? `data:${img.mimeType};base64,${Buffer.from(img.imageData).toString('base64')}`
+      : null,
+  })),
+}));
+
+    res.status(200).json({
+      message: 'Submissions retrieved successfully.',
+      data: formatted,
+    });
+  } catch (err) {
+    console.error('Error fetching submissions:', err);
+    res.status(500).json({ error: 'Failed to fetch submissions' });
+  }
+};
+
+export const processSubmission = async (req, res) => {
+  try {
+    const { submissionId, isApproved, userId } = req.body;
+    const submission = await Submission.query().findById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    submission.isApproved = isApproved;
+    if(isApproved) {
+       submission.status = 'Approved'; 
+      submission.approved_at = formatDateForDB();
+       submission.approved_by = userId
+    }
+    else {
+      submission.status = 'Denied';
+    }
+    await submission.$query().update();
+    res.status(200).json({ message: 'Submission processed successfully' });
+  } catch (err) {
+    console.error('Error processing submission:', err);
+    res.status(500).json({ error: 'Failed to process submission' });
+  }
+};
+
+export const deleteSubmission = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    const submission = await Submission.query().findById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    await submission.$query().delete();
+    res.status(200).json({ message: 'Submission deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting submission:', err);
+    res.status(500).json({ error: 'Failed to delete submission' });
+  }
+}
+
+
+function formatDateForDB(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
