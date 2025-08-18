@@ -16,6 +16,7 @@ import {
   IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   handleSubmissionDelete,
   postStatusChanged,
@@ -37,6 +38,9 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
 
   const [openExifDialog, setOpenExifDialog] = useState(false);
   const [selectedExif, setSelectedExif] = useState(null);
+
+  const [openUserDialog, setOpenUserDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const { apiUrls } = useApiStore();
   const queryClient = useQueryClient();
@@ -84,6 +88,15 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
     setSelectedExif(null);
     setOpenExifDialog(false);
   };
+  // User details functions
+  const handleOpenUserDialog = (user) => {
+    setSelectedUser(user);
+    setOpenUserDialog(true);
+  };
+  const handleCloseUserDialog = () => {
+    setSelectedUser(null);
+    setOpenUserDialog(false);
+  };
 
   // Transform API data
   const rows = data.map((item) => {
@@ -97,6 +110,8 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
       imageBase64: img?.imageBase64 || '',
       status: item.status, // 1, -1, 0
       exifData: img?.exif?.exifData || {},
+      email: item?.submitted_by?.email,
+      submitted_by: item?.submitted_by || {},
     };
   });
 
@@ -128,6 +143,25 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
       },
     },
     { field: 'filename', headerName: 'Filename', width: 200 },
+    {
+      field: 'email',
+      headerName: 'Email',
+      width: 220,
+    },
+    {
+      field: 'user_details',
+      headerName: 'User Details',
+      width: 150,
+      renderCell: (params) => (
+        <IconButton
+          color='primary'
+          size='small'
+          onClick={() => handleOpenUserDialog(params.row.submitted_by)}
+        >
+          <span>View Details</span>
+        </IconButton>
+      ),
+    },
     { field: 'location', headerName: 'Location', width: 200 },
     { field: 'dateTaken', headerName: 'Date Taken', width: 220 },
     { field: 'dateUploaded', headerName: 'Date Uploaded', width: 260 },
@@ -165,6 +199,7 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
         </Select>
       ),
     },
+
     {
       field: 'actions',
       headerName: 'Actions',
@@ -308,6 +343,46 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
           </Table>
         ) : (
           <Typography>No EXIF data available</Typography>
+        )}
+      </CustomDialog>
+
+      {/* User Details Dialog */}
+      <CustomDialog
+        open={openUserDialog}
+        onClose={handleCloseUserDialog}
+        title='User Details'
+        maxWidth='sm'
+        actions={<Button onClick={handleCloseUserDialog}>Close</Button>}
+      >
+        {selectedUser ? (
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <Box sx={{ width: '70%' }}>
+              <Typography>
+                <strong>Email:</strong> {selectedUser.email}
+              </Typography>
+              <Typography>
+                <strong>First Name:</strong> {selectedUser.first_name}
+              </Typography>
+              <Typography>
+                <strong>Last Name:</strong> {selectedUser.last_name}
+              </Typography>
+              <Typography>
+                <strong>Mobile:</strong> {selectedUser.mobile_number}
+              </Typography>
+              <Typography>
+                <strong>Role:</strong> {selectedUser.role}
+              </Typography>
+            </Box>
+            <Box sx={{ width: '30%' }}>
+              <Avatar
+                variant='square'
+                src={selectedUser.user_image}
+                sx={{ width: 100, height: 100 }}
+              />
+            </Box>
+          </Box>
+        ) : (
+          <Typography>No user details available.</Typography>
         )}
       </CustomDialog>
     </>
