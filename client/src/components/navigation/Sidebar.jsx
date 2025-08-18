@@ -111,6 +111,35 @@ function Sidebar({ mode, setMode }) {
         >
           Project Indoor OOH
         </Typography>
+        <Typography
+          variant='h6'
+          sx={{
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            color: theme.palette.text.primary,
+            textAlign: 'center',
+            padding: 2,
+            marginLeft: { xs: '1rem', md: 0 },
+          }}
+        >
+          Hello,{' '}
+          <span style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+            {authUser?.first_name}
+          </span>
+        </Typography>
+        <Typography
+          variant='body1'
+          sx={{
+            fontSize: '1rem',
+            fontWeight: 'bold',
+            color: theme.palette.text.primary,
+            textAlign: 'center',
+
+            marginLeft: { xs: '1rem', md: 0 },
+          }}
+        >
+          {authUser?.role}
+        </Typography>
         <Toolbar />
 
         <Box
@@ -163,7 +192,7 @@ function Sidebar({ mode, setMode }) {
               <ListItemIcon>
                 <HomeIcon sx={{ color: theme.palette.primary.main }} />
               </ListItemIcon>
-              <ListItemText primary='Home' />
+              <ListItemText primary="User's Table" />
             </ListItem>
 
             <ListItem

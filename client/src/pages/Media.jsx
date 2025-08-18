@@ -11,12 +11,16 @@ import { useApiStore } from '../store/apiStore';
 import { useMediaStore } from '../store/mediaStore';
 import ImageDataTable from '../components/media/ImageDataTable';
 import { useMutation } from '@tanstack/react-query';
+import { useAppStateStore } from '../store/authStore';
+import toast from 'react-hot-toast';
 
 const Media = () => {
   const theme = useTheme();
   const apiUrls = useApiStore((state) => state.apiUrls);
   const { uploadImages } = apiUrls;
   const { isLoading: storeLoading, setIsLoading } = useMediaStore();
+
+  const { authUser } = useAppStateStore((state) => state);
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [imageData, setImageData] = useState([]);
@@ -35,7 +39,7 @@ const Media = () => {
     files.forEach((file) => {
       formData.append('images', file);
     });
-    formData.append('submitted_by', 1);
+    formData.append('submitted_by', authUser?.id);
 
     const response = await fetch(uploadImages, {
       method: 'POST',
@@ -43,11 +47,20 @@ const Media = () => {
       credentials: 'include',
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
     }
 
-    return response.json();
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Upload failed with status ${response.status}`
+      );
+    }
+
+    return data;
   };
 
   // React Query mutation
@@ -55,13 +68,16 @@ const Media = () => {
     mutationFn: uploadFiles,
     onMutate: () => {
       setIsLoading(true);
+      toast.loading('Uploading image...', { id: 'upload-toast' }); // show loading toast
     },
     onSuccess: (data) => {
       setImageData(data?.data || []);
       console.log('Upload successful:', data);
+      toast.success('Image uploaded successfully!', { id: 'upload-toast' });
     },
     onError: (err) => {
       console.error('Upload failed:', err.message);
+      toast.error(`Upload failed: ${err.message}`, { id: 'upload-toast' });
     },
     onSettled: () => {
       setIsLoading(false);

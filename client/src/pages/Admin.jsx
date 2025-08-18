@@ -61,11 +61,11 @@ const Admin = () => {
           color: theme.palette.text.primary,
         }}
       >
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+        {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
           <CardItem name='Total Photos' value='100' />
           <CardItem name='Total Submissions' value='100' />
           <CardItem name='Total Rejected' value='100' />
-        </Box>
+        </Box> */}
         <Box sx={{ width: '100%', height: '500px', marginTop: '50px' }}>
           {adminImages.length > 0 && (
             <AdminSubmissionsTable data={adminImages} />
