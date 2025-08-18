@@ -8,6 +8,7 @@ import createCustomTheme from './theme';
 import Sidebar from './components/navigation/Sidebar';
 import { useAppStateStore } from '../src/store/authStore';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <Toaster position='top-right' reverseOrder={false} />
         <Box
           sx={{
             display: 'flex',

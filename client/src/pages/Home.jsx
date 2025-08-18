@@ -25,6 +25,7 @@ const Home = () => {
     return data?.data.map((item) => ({
       id: item?.id || 'N/A',
       filename: item?.filename || 'N/A',
+      imageBase64: item?.imageBase64 || 'N/A',
       dateTaken: item?.exif?.dateTaken || 'N/A',
       dateUploaded: item?.exif?.dateUploaded || 'N/A',
       locationName: item?.exif?.locationName || 'Unknown',
@@ -40,7 +41,7 @@ const Home = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ['all-images'],
+    queryKey: ['all-images-by-user'],
     queryFn: fetchAllImages,
   });
 
@@ -83,7 +84,7 @@ const Home = () => {
           <CardItem name='Total Rejected' value='100' />
         </Box>
         <Box sx={{ width: '100%', height: '500px', marginTop: '50px' }}>
-          {allImages.length > 0 && <AllImageTable data={allImages} />}
+          {allImages && <AllImageTable data={allImages} />}
         </Box>
       </Box>
     </>

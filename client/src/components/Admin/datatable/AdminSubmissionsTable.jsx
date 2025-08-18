@@ -1,25 +1,49 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, Chip, Avatar, Dialog } from '@mui/material';
+import {
+  Box,
+  Chip,
+  Avatar,
+  Dialog,
+  Select,
+  MenuItem,
+  Button,
+  Typography,
+  Table,
+  TableBody,
+  TableRow,
+  TableCell,
+  IconButton,
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import {
+  handleSubmissionDelete,
+  postStatusChanged,
+} from '../../../helpers/postFunctions';
+import toast from 'react-hot-toast';
+import { useApiStore } from '../../../store/apiStore';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAppStateStore } from '../../../store/authStore';
+import CustomDialog from '../popups components/CustomDialog';
 
-// Function to convert approval status to label + color
-const getStatusChip = (isApproved) => {
-  switch (isApproved) {
-    case 1:
-      return <Chip label='Approved' color='success' />;
-    case -1:
-      return <Chip label='Rejected' color='error' />;
-    default:
-      return <Chip label='Pending' color='warning' />;
-  }
-};
-
-const AdminSubmissionsTable = ({ data }) => {
+const AdminSubmissionsTable = ({ data, onStatusChange }) => {
+  const authUser = useAppStateStore((state) => state.authUser);
   const [openLightbox, setOpenLightbox] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [newStatus, setNewStatus] = useState(null);
+
+  const [openExifDialog, setOpenExifDialog] = useState(false);
+  const [selectedExif, setSelectedExif] = useState(null);
+
+  const { apiUrls } = useApiStore();
+  const queryClient = useQueryClient();
+
+  // Lightbox functions
   const handleOpenLightbox = (src) => {
-    setSelectedImage(src); // don't add data:image/jpeg;base64, again
+    setSelectedImage(src);
     setOpenLightbox(true);
   };
 
@@ -28,31 +52,40 @@ const AdminSubmissionsTable = ({ data }) => {
     setSelectedImage(null);
   };
 
-  const bufferBase64ToBlobUrl = (dataUrl) => {
-    if (!dataUrl) return '';
-
-    const base64String = dataUrl.split(',')[1];
-
-    try {
-      // Try to parse as Buffer JSON
-      const jsonString = atob(base64String);
-      const bufferObj = JSON.parse(jsonString);
-
-      if (bufferObj?.type === 'Buffer' && Array.isArray(bufferObj.data)) {
-        const uint8Array = new Uint8Array(bufferObj.data);
-        const blob = new Blob([uint8Array], { type: 'image/jpeg' });
-        return URL.createObjectURL(blob);
-      }
-
-      // If it's not a buffer object, treat it as raw image base64
-      return dataUrl;
-    } catch (e) {
-      // If atob or JSON.parse fails, just return the original string
-      return dataUrl;
-    }
+  // Handle dropdown change
+  const handleStatusSelect = (row, value) => {
+    console.log('value', value);
+    console.log('row', row);
+    setSelectedRow(row);
+    setNewStatus(value);
+    setOpenDialog(true);
   };
 
-  // Transform API data into DataGrid rows
+  const handleConfirmChange = () => {
+    if (selectedRow && newStatus) {
+      changeStatus({ id: selectedRow.id, status: newStatus }); // 🔥 fire mutation
+    }
+    setOpenDialog(false);
+    setSelectedRow(null);
+    setNewStatus(null);
+  };
+
+  const handleCancel = () => {
+    setOpenDialog(false);
+    setSelectedRow(null);
+    setNewStatus(null);
+  };
+  const handleOpenExif = (exifData) => {
+    setSelectedExif(exifData);
+    setOpenExifDialog(true);
+  };
+
+  const handleCloseExif = () => {
+    setSelectedExif(null);
+    setOpenExifDialog(false);
+  };
+
+  // Transform API data
   const rows = data.map((item) => {
     const img = item.images?.[0];
     return {
@@ -62,10 +95,12 @@ const AdminSubmissionsTable = ({ data }) => {
       dateTaken: img?.exif?.dateTaken || 'N/A',
       dateUploaded: img?.exif?.dateUploaded || 'N/A',
       imageBase64: img?.imageBase64 || '',
-      status: item.isApproved,
+      status: item.status, // 1, -1, 0
+      exifData: img?.exif?.exifData || {},
     };
   });
 
+  // Columns for DataGrid
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
     {
@@ -73,11 +108,13 @@ const AdminSubmissionsTable = ({ data }) => {
       headerName: 'Image',
       width: 120,
       renderCell: (params) => {
-        const blobUrl = bufferBase64ToBlobUrl(params.value);
+        if (!params.value) return 'No Image';
+        // console.log('params.value', params.value);
+
         return (
           <Avatar
             variant='square'
-            src={blobUrl}
+            src={params.value}
             alt='Uploaded'
             sx={{
               width: 60,
@@ -85,7 +122,7 @@ const AdminSubmissionsTable = ({ data }) => {
               cursor: 'pointer',
               border: '1px solid #ccc',
             }}
-            onClick={() => handleOpenLightbox(blobUrl)}
+            onClick={() => handleOpenLightbox(params.value)}
           />
         );
       },
@@ -95,14 +132,90 @@ const AdminSubmissionsTable = ({ data }) => {
     { field: 'dateTaken', headerName: 'Date Taken', width: 220 },
     { field: 'dateUploaded', headerName: 'Date Uploaded', width: 260 },
     {
+      field: 'exif',
+      headerName: 'EXIF Data',
+      width: 150,
+      renderCell: (params) => (
+        <Button
+          variant='outlined'
+          size='small'
+          onClick={() => handleOpenExif(params.row.exifData)}
+        >
+          View EXIF
+        </Button>
+      ),
+    },
+
+    {
       field: 'status',
       headerName: 'Status',
-      width: 130,
-      renderCell: (params) => getStatusChip(params.value),
+      width: 150,
+      renderCell: (params) => (
+        <Select
+          value={params.value}
+          size='small'
+          onChange={(e) => handleStatusSelect(params.row, e.target.value)}
+          sx={{ width: '100%' }}
+        >
+          <MenuItem disabled={params.value === 'Denied'} value='Pending'>
+            Pending
+          </MenuItem>
+          <MenuItem value='Approved'>Approved</MenuItem>
+          <MenuItem value='Denied'>Denied</MenuItem>
+        </Select>
+      ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 150,
+      renderCell: (params) => (
+        <IconButton
+          color='error'
+          size='small'
+          onClick={() => handleDelete(params.row.id)}
+        >
+          <DeleteIcon />
+        </IconButton>
+      ),
     },
   ];
+
+  const handleDelete = async (id) => {
+    await handleSubmissionDelete(`${apiUrls.deleteSubmission}`, id);
+    toast.success('Submission deleted successfully!');
+    queryClient.invalidateQueries(['submissions']); // ✅ refetch submissions table
+  };
+
+  const { mutate: changeStatus, isLoading: isChanging } = useMutation({
+    mutationFn: async ({ id, status }) => {
+      const payload = {
+        submissionId: id,
+        isApproved: status === 'Approved' ? 1 : 0,
+        userId: authUser?.id,
+      };
+      console.log('payload', payload);
+      return await postStatusChanged(
+        `${apiUrls.postChangeSubmissionStatus}`,
+        'POST',
+        payload
+      );
+    },
+    onSuccess: () => {
+      toast.success('Status updated successfully!');
+      queryClient.invalidateQueries(['submissions']); // ✅ refetch submissions table
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update status');
+    },
+  });
+  useEffect(() => {
+    console.log('admin data', data);
+  }, []);
+
   return (
     <>
+      {/* Data Table */}
       <Box sx={{ height: 500, width: '100%' }}>
         <DataGrid
           rows={rows}
@@ -111,18 +224,23 @@ const AdminSubmissionsTable = ({ data }) => {
           rowsPerPageOptions={[5, 10, 20]}
         />
       </Box>
-      {/* Lightbox Dialog */}
-      <Dialog open={openLightbox} onClose={handleCloseLightbox} maxWidth='lg'>
-        <Box
-          sx={{
-            p: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#000',
-          }}
-        >
-          {selectedImage && (
+
+      {/* Lightbox */}
+      <CustomDialog
+        open={openLightbox}
+        onClose={handleCloseLightbox}
+        maxWidth='lg'
+        hideTitle
+      >
+        {selectedImage && (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#000',
+            }}
+          >
             <img
               src={selectedImage}
               alt='Preview'
@@ -132,80 +250,140 @@ const AdminSubmissionsTable = ({ data }) => {
                 borderRadius: '8px',
               }}
             />
+          </Box>
+        )}
+      </CustomDialog>
+
+      {/* Confirmation Dialog */}
+      <CustomDialog
+        open={openDialog}
+        onClose={handleCancel}
+        title='Confirm Status Change'
+        actions={
+          <>
+            <Button onClick={handleCancel}>Cancel</Button>
+            <Button
+              onClick={handleConfirmChange}
+              variant='contained'
+              color='primary'
+            >
+              Confirm
+            </Button>
+          </>
+        }
+      >
+        <Typography>
+          Are you sure you want to change the status of{' '}
+          <strong>ID {selectedRow?.id}</strong> to <strong>{newStatus}</strong>?
+          <br />
+          <br />
+          {newStatus === 'Denied' && (
+            <strong style={{ color: '#EE4B2B' }}>
+              ⚠️ This is a permanent action and cannot be undone
+            </strong>
           )}
-        </Box>
-      </Dialog>
+        </Typography>
+      </CustomDialog>
+
+      {/* EXIF Data Dialog */}
+      <CustomDialog
+        open={openExifDialog}
+        onClose={handleCloseExif}
+        title='EXIF Data'
+        maxWidth='md'
+        actions={<Button onClick={handleCloseExif}>Close</Button>}
+      >
+        {selectedExif ? (
+          <Table>
+            <TableBody>
+              {Object.entries(selectedExif).map(([key, value]) => (
+                <TableRow key={key}>
+                  <TableCell>
+                    <strong>{key}</strong>
+                  </TableCell>
+                  <TableCell>{String(value)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <Typography>No EXIF data available</Typography>
+        )}
+      </CustomDialog>
     </>
   );
 };
 
 export default AdminSubmissionsTable;
+
 // {
-//     "id": 3,
+//     "id": 1,
 //     "isApproved": 0,
 //     "images": [
 //         {
-//             "id": 51,
-//             "filename": "DSCN0012.jpg",
+//             "id": 1,
+//             "filename": "IMG_4408.jpg",
 //             "exif": {
-//                 "filename": "DSCN0012.jpg",
+//                 "filename": "IMG_4408.jpg",
 //                 "geolocation": {
-//                     "lat": 43.46715666666389,
-//                     "lon": 11.885394999997223
+//                     "lat": 13.388988888888889,
+//                     "lon": 121.18284722222222
 //                 },
-//                 "dateTaken": "October 22, 2008 at 16:29:49 UTC",
-//                 "dateUploaded": "August 13, 2025 at 05:16:24 PM (Asia/Manila)",
-//                 "locationName": "Arezzo, Toscana, Italia",
+//                 "dateTaken": "August 14, 2025 at 09:28:38 UTC",
+//                 "dateUploaded": "August 14, 2025 at 01:35:04 PM (Asia/Manila)",
+//                 "locationName": "Calapan, Oriental Mindoro, Mimaropa, Philippines",
 //                 "exifData": {
-//                     "ImageDescription": "                               ",
-//                     "Make": "NIKON",
-//                     "Model": "COOLPIX P6000",
-//                     "Orientation": 1,
-//                     "XResolution": 300,
-//                     "YResolution": 300,
+//                     "Make": "Apple",
+//                     "Model": "iPhone 15 Pro Max",
+//                     "Orientation": 6,
+//                     "XResolution": 72,
+//                     "YResolution": 72,
 //                     "ResolutionUnit": 2,
-//                     "Software": "Nikon Transfer 1.1 W",
-//                     "ModifyDate": 1225574107,
-//                     "YCbCrPositioning": 1,
+//                     "Software": "18.5",
+//                     "ModifyDate": 1755163718,
+//                     "HostComputer": "iPhone 15 Pro Max",
 //                     "GPSLatitudeRef": "N",
-//                     "GPSLatitude": 43.46715666666389,
+//                     "GPSLatitude": 13.388988888888889,
 //                     "GPSLongitudeRef": "E",
-//                     "GPSLongitude": 11.885394999997223,
+//                     "GPSLongitude": 121.18284722222222,
 //                     "GPSAltitudeRef": 0,
-//                     "GPSSatellites": "06",
-//                     "GPSImgDirectionRef": "",
-//                     "GPSMapDatum": "WGS-84   ",
-//                     "GPSDateStamp": "2008:10:23",
-//                     "ExposureTime": 0.00560852,
-//                     "FNumber": 4.5,
+//                     "GPSAltitude": 5.478384019081694,
+//                     "GPSSpeedRef": "K",
+//                     "GPSSpeed": 0,
+//                     "GPSImgDirectionRef": "T",
+//                     "GPSImgDirection": 20.016628251564043,
+//                     "GPSDestBearingRef": "T",
+//                     "GPSDestBearing": 20.016628251564043,
+//                     "GPSDateStamp": "2025:08:14",
+//                     "GPSHPositioningError": 9.687959025898724,
+//                     "ExposureTime": 0.025,
+//                     "FNumber": 1.7799999713880652,
 //                     "ExposureProgram": 2,
-//                     "ISO": 64,
-//                     "DateTimeOriginal": 1224692989,
-//                     "CreateDate": 1224692989,
-//                     "ExposureCompensation": 0,
-//                     "MaxApertureValue": 2.9,
+//                     "ISO": 1000,
+//                     "DateTimeOriginal": 1755163718,
+//                     "CreateDate": 1755163718,
+//                     "undefined": "+08:00",
+//                     "ShutterSpeedValue": 5.321524201853759,
+//                     "ApertureValue": 1.6637544366004915,
+//                     "BrightnessValue": -0.45888591485278524,
+//                     "ExposureCompensation": 0.33539035466185535,
 //                     "MeteringMode": 5,
-//                     "LightSource": 0,
 //                     "Flash": 16,
-//                     "FocalLength": 6,
-//                     "ColorSpace": 1,
-//                     "ExifImageWidth": 640,
-//                     "ExifImageHeight": 480,
-//                     "CustomRendered": 0,
+//                     "FocalLength": 6.764999866370901,
+//                     "SubSecTimeOriginal": "858",
+//                     "SubSecTimeDigitized": "858",
+//                     "ColorSpace": 65535,
+//                     "ExifImageWidth": 5712,
+//                     "ExifImageHeight": 4284,
+//                     "SensingMethod": 2,
 //                     "ExposureMode": 0,
 //                     "WhiteBalance": 0,
-//                     "DigitalZoomRatio": 0,
-//                     "FocalLengthIn35mmFormat": 28,
-//                     "SceneCaptureType": 0,
-//                     "GainControl": 0,
-//                     "Contrast": 0,
-//                     "Saturation": 0,
-//                     "Sharpness": 0,
-//                     "SubjectDistanceRange": 0,
-//                     "InteropIndex": "R98"
+//                     "FocalLengthIn35mmFormat": 24,
+//                     "LensMake": "Apple",
+//                     "LensModel": "iPhone 15 Pro Max back triple camera 6.765mm f/1.78"
 //                 }
 //             },
-//             "imageBase64": "base 64 string"
+//             "imageBase64": ""
 //         }
 //     ]
 // }

@@ -16,6 +16,7 @@ import { Formik } from 'formik';
 import { useApiStore } from '../store/apiStore';
 import { useAppStateStore } from '../store/authStore';
 import { useMediaStore } from '../store/mediaStore';
+import toast, { Toaster } from 'react-hot-toast';
 
 const loginInitialValues = {
   email: '',
@@ -48,8 +49,10 @@ const Login = () => {
         credentials: 'include',
         body: JSON.stringify(values),
       });
+      console.log(response);
 
       if (!response.ok) {
+        toast.error('Login failed', { id: 'login-toast' });
         throw new Error('Login failed');
       }
 
@@ -63,6 +66,7 @@ const Login = () => {
       // login(data.user, data.token);
 
       navigate('/');
+      toast.success('Login successful', { id: 'login-toast' });
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -71,6 +75,7 @@ const Login = () => {
   };
   return (
     <>
+      <Toaster position='top-right' reverseOrder={false} />
       <Box sx={{ width: '100%' }}>
         <Backdrop
           sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}

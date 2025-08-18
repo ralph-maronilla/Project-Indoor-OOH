@@ -17,7 +17,9 @@ const useApiStore = create((set) => ({
     getAllImages: `${BASE_URL}/api/v1/images/getImages`,
     getAllImagesByUserId: `${BASE_URL}/api/v1/images/getImagesByUserId`,
     // Admin endpoints
-    getAllSubmissions: `${BASE_URL}/api/v1/images/getSubmissions`,
+    getAllSubmissions: `${BASE_URL}/api/v1/submissions/getSubmissions`,
+    postChangeSubmissionStatus: `${BASE_URL}/api/v1/submissions/process`,
+    deleteSubmission: `${BASE_URL}/api/v1/submissions/delete`,
   },
 }));
 
