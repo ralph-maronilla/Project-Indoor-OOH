@@ -4,7 +4,7 @@ import Submission from '../models/Submission.js';
   export const getSubmissions = async (req, res) => {
   try {
   const submissions = await Submission.query()
-  .select('id', 'isApproved')
+  .select('id', 'isApproved', 'status')
   .withGraphFetched('images')
   .modifyGraph('images', builder => {
     builder.select(
@@ -12,15 +12,18 @@ import Submission from '../models/Submission.js';
       'filename',
       'mime_type',
       'image_data',
-      'image_exif_data'
+      'image_exif_data',
     );
   });
+
+
 
 
     // Format images with base64 + parsed EXIF
 const formatted = submissions.map(sub => ({
   id: sub.id,
   isApproved: sub.isApproved,
+  status: sub.status,
   images: sub.images.map(img => ({
     id: img.id,
     filename: img.filename,

@@ -21,9 +21,10 @@ class UploadedImage extends BaseModel {
         user_id: { type: ['integer', 'null'] },
         filename: { type: 'string', minLength: 1, maxLength: 255 },
         mime_type: { type: 'string', minLength: 1, maxLength: 100 },
-image_data: { type: 'object' },
+image_data: { type: 'string' },
         created_at: { type: 'string', format: 'date-time' },
         image_exif_data: { type: ['string', 'null'] },
+        
       },
     };
   }

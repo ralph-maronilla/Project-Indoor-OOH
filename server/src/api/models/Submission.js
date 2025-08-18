@@ -23,6 +23,7 @@ class Submission extends BaseModel {
         approved_by: { type: ['integer', 'null'] },
         approved_at: { type: ['string', 'null'], format: 'date-time' },
         isApproved: { type: 'boolean' },
+        status: { type: 'string' },
       },
     };
   }
