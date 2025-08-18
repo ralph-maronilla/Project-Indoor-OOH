@@ -5,6 +5,7 @@ import Submission from '../models/Submission.js';
 import exifParser from 'exif-parser';
 import fetch from 'node-fetch';
 import sharp from 'sharp';
+import User from '../models/User.js';
 
 const upload = multer();
 
@@ -434,11 +435,24 @@ export const uploadSubmissionWithImages = [
             image_id: saved.id,
           });
 
+          const user = await User.query().where('id', submitted_by).first();
+          
+          const mappedUser = {
+            name: user.name,
+            email: user.email,
+            mobile_number: user.mobileNumber,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            role: user.role
+          };
+          
+       
           return {
             id: saved.id,
             filename: saved.filename,
             exif: imageInfo,
             imageBase64: dataUri,
+            submitted_by: mappedUser
           };
         })
       );
