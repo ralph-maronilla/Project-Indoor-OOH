@@ -26,9 +26,12 @@ import { useApiStore } from '../../../store/apiStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStateStore } from '../../../store/authStore';
 import CustomDialog from '../popups components/CustomDialog';
+import { useMediaStore } from '../../../store/mediaStore';
 
 const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   const authUser = useAppStateStore((state) => state.authUser);
+  const setIsLoading = useMediaStore((state) => state.setIsLoading);
+
   const [openLightbox, setOpenLightbox] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -224,6 +227,7 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
 
   const { mutate: changeStatus, isLoading: isChanging } = useMutation({
     mutationFn: async ({ id, status }) => {
+      setIsLoading(true);
       const payload = {
         submissionId: id,
         isApproved: status === 'Approved' ? 1 : 0,
@@ -238,7 +242,8 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
     },
     onSuccess: () => {
       toast.success('Status updated successfully!');
-      queryClient.invalidateQueries(['submissions']); // ✅ refetch submissions table
+      queryClient.invalidateQueries(['fetch-admin-submissions']); // ✅ refetch submissions table
+      setIsLoading(false);
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to update status');
