@@ -414,7 +414,7 @@ export const uploadSubmissionWithImages = [
 
           // ✅ Compress to WebP and convert directly to base64 string
      const compressedBuffer = await sharp(file.buffer)
-  .webp({ quality: 75, effort: 6 }) // balanced: smaller size, still sharp
+  .webp({ quality: 70, effort: 6 }) // balanced: smaller size, still sharp
   .toBuffer();
 
           const base64String = compressedBuffer.toString('base64');

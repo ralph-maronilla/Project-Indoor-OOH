@@ -31,7 +31,7 @@ const formatted = submissions.map(sub => ({
    ? JSON.parse(img.imageExifData)
   : null,
     imageBase64: img.imageData
-      ? `data:${img.mimeType};base64,${Buffer.from(img.imageData).toString('base64')}`
+      ? `data:${img.mimeType};base64,${img.imageData}` // `data:image/jpeg;base64,img.imageData`
       : null,
   })),
 }));
