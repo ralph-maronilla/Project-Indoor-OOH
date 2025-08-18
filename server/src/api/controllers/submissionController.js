@@ -1,10 +1,10 @@
 import Submission from '../models/Submission.js';
-
+import User from '../models/User.js';
 
   export const getSubmissions = async (req, res) => {
   try {
   const submissions = await Submission.query()
-  .select('id', 'isApproved', 'status')
+  .select('id', 'isApproved', 'status','submitted_by')
   .withGraphFetched('images')
   .modifyGraph('images', builder => {
     builder.select(
@@ -17,11 +17,20 @@ import Submission from '../models/Submission.js';
   });
 
 
-
+  const user = await User.query().findById(submissions[0].submittedBy);
+  const mappedUser = {
+    name: user.name,
+    email: user.email,
+    mobile_number: user.mobileNumber,
+    first_name: user.firstName,
+    last_name: user.lastName,
+    role: user.role
+  };
 
     // Format images with base64 + parsed EXIF
 const formatted = submissions.map(sub => ({
   id: sub.id,
+  submitted_by: mappedUser,
   isApproved: sub.isApproved,
   status: sub.status,
   images: sub.images.map(img => ({
