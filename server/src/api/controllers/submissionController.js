@@ -16,15 +16,19 @@ import User from '../models/User.js';
     );
   });
 
-
+  
   const user = await User.query().findById(submissions[0].submittedBy);
+
+  const userImage = user.userImage;
+
   const mappedUser = {
     name: user.name,
     email: user.email,
     mobile_number: user.mobileNumber,
     first_name: user.firstName,
     last_name: user.lastName,
-    role: user.role
+    role: user.role,
+    user_image: userImage
   };
 
     // Format images with base64 + parsed EXIF

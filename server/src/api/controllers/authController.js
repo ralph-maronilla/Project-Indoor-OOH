@@ -31,6 +31,11 @@ export const register = async (req, res, next) => {
      imageBlob = req.file.buffer;
      mimeType = req.file.mimetype;
     }
+     let user_image = null; 
+    if(imageBlob){
+     const base64Image = Buffer.from(imageBlob).toString('base64');
+     user_image = `data:${mimeType};base64,${base64Image}`;
+       }
 
     const hashedPassword = await hashPassword(password);
     const newUser = await User.query().insert({
@@ -40,7 +45,7 @@ export const register = async (req, res, next) => {
       first_name,
       last_name,
       role,
-      user_image: imageBlob,
+      user_image: user_image,
       mime_type: mimeType
     });
 
@@ -50,11 +55,8 @@ export const register = async (req, res, next) => {
     }
 
     const token = createJWT({ id: newUser.id, email: newUser.email });
-    let user_image = null;
-       if(imageBlob){
-     const base64Image = Buffer.from(imageBlob).toString('base64');
-     user_image = `data:${mimeType};base64,${base64Image}`;
-       }
+  
+ 
     res.status(201).json({
       message: 'User registered successfully',
       user: { id: newUser.id, email: newUser.email, role: newUser.role, 
