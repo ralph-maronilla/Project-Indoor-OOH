@@ -1,6 +1,7 @@
 import Submission from '../models/Submission.js';
 import User from '../models/User.js';
-
+import RewardHistory from '../models/RewardHistory.js';
+import sharp from 'sharp';
   export const getSubmissions = async (req, res) => {
   try {
   const submissions = await Submission.query()
@@ -124,6 +125,45 @@ export const deleteSubmission = async (req, res) => {
   } catch (err) {
     console.error('Error deleting submission:', err);
     res.status(500).json({ error: 'Failed to delete submission' });
+  }
+}
+
+export const submitRewardHistory = async (req, res) => {
+  try {
+    const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number } = req.body;
+    const file = req.file;  
+    console.log(req.body);
+    const compressedBuffer = await sharp(file.buffer)
+      .webp({ quality: 70, effort: 6 }) // balanced: smaller size, still sharp
+      .toBuffer();
+    
+              const base64String = compressedBuffer.toString('base64');
+              const dataUri = `data:image/webp;base64,${base64String}`;
+    
+   await RewardHistory.query().insert({
+  user_email,
+  user_fullname,
+  user_mobilenumber,
+  reward_amount,
+  reward_description,
+  reward_receipt: dataUri,
+  reward_reference_number,
+});
+
+    res.status(200).json({ message: 'Reward history submitted successfully' });
+  } catch (err) {
+    console.error('Error submitting reward history:', err);
+    res.status(500).json({ error: 'Failed to submit reward history' });
+  }
+}
+
+export const getRewardHistory = async (req, res) => {
+  try {
+    const rewardHistory = await RewardHistory.query();
+    res.status(200).json(rewardHistory);
+  } catch (err) {
+    console.error('Error fetching reward history:', err);
+    res.status(500).json({ error: 'Failed to fetch reward history' });
   }
 }
 
