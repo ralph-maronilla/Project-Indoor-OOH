@@ -31,23 +31,52 @@ import User from '../models/User.js';
     user_image: userImage
   };
 
-    // Format images with base64 + parsed EXIF
-const formatted = submissions.map(sub => ({
-  id: sub.id,
-  submitted_by: mappedUser,
-  isApproved: sub.isApproved,
-  status: sub.status,
-  images: sub.images.map(img => ({
-    id: img.id,
-    filename: img.filename,
-    exif: img.imageExifData
-   ? JSON.parse(img.imageExifData)
-  : null,
-    imageBase64: img.imageData
-      ? `data:${img.mimeType};base64,${img.imageData}` // `data:image/jpeg;base64,img.imageData`
-      : null,
-  })),
-}));
+    
+const formatted = await Promise.all(
+  submissions.map(async sub => {
+    const user = await User.query()
+      .findById(sub.submittedBy);
+ 
+
+    const formattedUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      mobile_number: user.mobileNumber,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      role: user.role,
+      images: sub.images.map(img => ({
+        id: img.id,
+        filename: img.filename,
+        exif: img.imageExifData
+          ? JSON.parse(img.imageExifData)
+          : null,
+        imageBase64: img.imageData
+          ? `data:${img.mimeType};base64,${img.imageData}`
+          : null,
+      })),
+    };
+
+    return {
+      id: sub.id,
+      submitted_by: formattedUser,
+      isApproved: sub.isApproved,
+      status: sub.status,
+      images: sub.images.map(img => ({
+        id: img.id,
+        filename: img.filename,
+        exif: img.imageExifData
+          ? JSON.parse(img.imageExifData)
+          : null,
+        imageBase64: img.imageData
+          ? `data:${img.mimeType};base64,${img.imageData}`
+          : null,
+      })),
+    };
+  })
+);
+
 
     res.status(200).json({
       message: 'Submissions retrieved successfully.',
