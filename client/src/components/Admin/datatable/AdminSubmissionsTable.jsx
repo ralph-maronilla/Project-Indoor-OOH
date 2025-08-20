@@ -50,6 +50,8 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   const [openUserDialog, setOpenUserDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [openRewardsDialog, setOpenRewardsDialog] = useState(false);
+  const [openRewardDetailsDialog, setOpenRewardDetailsDialog] = useState(false);
+  const [selectedReward, setSelectedReward] = useState(null);
 
   const { apiUrls } = useApiStore();
   const queryClient = useQueryClient();
@@ -216,11 +218,12 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
       headerName: 'Rewarded',
       width: 150,
       renderCell: (params) => {
-        console.log('params.value', params.value);
+        // console.log('params.value', params.value);
         return (
           <Chip
             label={params.value === 1 ? 'Rewarded' : 'Not Rewarded'}
-            onClick={() => console.log('clicked')}
+            onClick={() => handleOpenRewardDialog(params.row)}
+            color={params.value === 1 ? 'success' : 'error'}
           />
         );
       },
@@ -316,6 +319,15 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
 
   const handleCloseRewards = () => {
     setOpenRewardsDialog(false);
+  };
+  const handleOpenRewardDialog = (reward) => {
+    setSelectedReward(reward);
+    setOpenRewardDetailsDialog(true);
+  };
+
+  const handleCloseRewardDialog = () => {
+    setOpenRewardDetailsDialog(false);
+    setSelectedReward(null);
   };
 
   return (
@@ -516,6 +528,49 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
           />
         ) : (
           <Typography>Submission has already been rewarded</Typography>
+        )}
+      </CustomDialog>
+      {/* Reward Details Dialog */}
+      <CustomDialog
+        open={openRewardDetailsDialog}
+        onClose={handleCloseRewardDialog}
+        title='Reward Details'
+        maxWidth='sm'
+        actions={<Button onClick={handleCloseRewardDialog}>Close</Button>}
+      >
+        {selectedReward ? (
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <Box sx={{ width: '70%' }}>
+              <Typography>
+                <strong>Email:</strong> {selectedReward.email}
+              </Typography>
+              <Typography>
+                <strong>First Name:</strong> {selectedReward.first_name}
+              </Typography>
+              <Typography>
+                <strong>Last Name:</strong> {selectedReward.last_name}
+              </Typography>
+              <Typography>
+                <strong>Mobile:</strong> {selectedReward.mobile_number}
+              </Typography>
+              <Typography>
+                <strong>Role:</strong> {selectedReward.role}
+              </Typography>
+              <Typography>
+                <strong>Rewarded:</strong>{' '}
+                {selectedReward.isRewarded ? 'Yes' : 'No'}
+              </Typography>
+            </Box>
+            <Box sx={{ width: '30%' }}>
+              <Avatar
+                variant='square'
+                src={selectedReward.user_image}
+                sx={{ width: 100, height: 100 }}
+              />
+            </Box>
+          </Box>
+        ) : (
+          <Typography>No reward details available.</Typography>
         )}
       </CustomDialog>
     </>
