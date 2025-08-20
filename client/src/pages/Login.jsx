@@ -37,7 +37,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLoginSubmit = async (values) => {
-    console.log('Login submitted:', values);
+    // console.log('Login submitted:', values);
     try {
       setIsLoading(true);
       console.log(apiUrls.login);
