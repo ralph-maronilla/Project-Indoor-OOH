@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Box, Typography, TextField, Button } from '@mui/material';
@@ -7,6 +7,7 @@ import { postRewardSubmission } from '../../../helpers/postFunctions';
 import { useApiStore } from '../../../store/apiStore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMediaStore } from '../../../store/mediaStore';
+import { useAppStateStore } from '../../../store/authStore';
 
 // ✅ Yup validation schema
 const validationSchema = Yup.object().shape({
@@ -34,6 +35,8 @@ const RewardForms = ({ selectedUser, handleCloseRewards }) => {
   const setIsLoading = useMediaStore((state) => state.setIsLoading);
   const isLoading = useMediaStore((state) => state.isLoading);
   const queryClient = useQueryClient();
+  const authUser = useAppStateStore((state) => state.authUser);
+
   const handleRewardSubmit = async (values) => {
     try {
       setIsLoading(true);
@@ -47,6 +50,8 @@ const RewardForms = ({ selectedUser, handleCloseRewards }) => {
         'reward_reference_number',
         values.reward_reference_number
       );
+      formData.append('submitted_by', authUser?.id);
+      formData.append('submission_id', selectedUser?.id);
 
       if (values.image) {
         formData.append('image', values.image); // ✅ file goes here
@@ -58,10 +63,10 @@ const RewardForms = ({ selectedUser, handleCloseRewards }) => {
       );
       console.log(response);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      toast.success('Reward submission successful', { id: 'reward-toast' });
+      //   if (!response.ok) {
+      //     throw new Error(`HTTP error! Status: ${response.status}`);
+      //   }
+      toast.success(response?.message, { id: 'reward-toast' });
       queryClient.invalidateQueries(['fetch-admin-submissions']);
       // ✅ close dialog after success
       handleCloseRewards();
@@ -86,6 +91,10 @@ const RewardForms = ({ selectedUser, handleCloseRewards }) => {
     validationSchema,
     onSubmit: handleRewardSubmit,
   });
+
+  //   useEffect(() => {
+  //     console.log('selected row', selectedUser);
+  //   });
 
   return (
     <Box sx={{ mt: 2 }}>

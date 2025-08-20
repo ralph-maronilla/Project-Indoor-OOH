@@ -121,6 +121,7 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
       exifData: img?.exif?.exifData || {},
       email: item?.submitted_by?.email,
       submitted_by: item?.submitted_by || {},
+      isRewarded: item.isRewarded,
     };
   });
 
@@ -210,6 +211,20 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
         </Select>
       ),
     },
+    {
+      field: 'isRewarded',
+      headerName: 'Rewarded',
+      width: 150,
+      renderCell: (params) => {
+        console.log('params.value', params.value);
+        return (
+          <Chip
+            label={params.value === 1 ? 'Rewarded' : 'Not Rewarded'}
+            onClick={() => console.log('clicked')}
+          />
+        );
+      },
+    },
 
     {
       field: 'actions',
@@ -277,14 +292,13 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
       );
     },
     onSuccess: async () => {
-      toast.success('Status updated successfully!');
-
       await Promise.all([
         queryClient.invalidateQueries(['fetch-admin-submissions']),
         queryClient.invalidateQueries(['fetch-admin-rewards-submissions']),
       ]);
 
       setIsLoading(false);
+      toast.success('Status updated successfully!');
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to update status');
@@ -307,12 +321,23 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   return (
     <>
       {/* Data Table */}
-      <Box sx={{ height: 500, width: '100%' }}>
+      <Box
+        sx={{
+          height: 500,
+          width: '100%',
+          '& .row-rewarded': {
+            backgroundColor: '#2f352fff', // light green
+          },
+        }}
+      >
         <DataGrid
           rows={rows}
           columns={columns}
           pageSize={5}
           rowsPerPageOptions={[5, 10, 20]}
+          // getRowClassName={(params) =>
+          //   params.row.isRewarded ? 'row-rewarded' : ''
+          // }
         />
       </Box>
 
@@ -484,10 +509,14 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
           </>
         }
       >
-        <RewardForms
-          selectedUser={selectedUser}
-          handleCloseRewards={handleCloseRewards}
-        />
+        {selectedUser?.isRewarded == !1 ? (
+          <RewardForms
+            selectedUser={selectedUser}
+            handleCloseRewards={handleCloseRewards}
+          />
+        ) : (
+          <Typography>Submission has already been rewarded</Typography>
+        )}
       </CustomDialog>
     </>
   );
