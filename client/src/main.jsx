@@ -10,6 +10,7 @@ import Media from './pages/Media.jsx';
 import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
 import ProtectedRoute from './components/navigation/ProtectedRoute.jsx';
+import Rewards from './pages/Rewards.jsx';
 
 const router = createBrowserRouter([
   {
@@ -40,6 +41,15 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['admin']}>
             <Admin />
+          </ProtectedRoute>
+        ),
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: '/rewards',
+        element: (
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Rewards />
           </ProtectedRoute>
         ),
         errorElement: <ErrorPage />,

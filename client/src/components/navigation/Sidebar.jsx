@@ -19,6 +19,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import LoginIcon from '@mui/icons-material/Login';
 import MmsIcon from '@mui/icons-material/Mms';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -156,24 +157,46 @@ function Sidebar({ mode, setMode }) {
           <List>
             {/* Show Admin link only if user is admin */}
             {authUser?.role === 'admin' && (
-              <ListItem
-                button
-                onClick={() => navigate('/admin')}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: isActive('/admin')
-                    ? theme.palette.hover.primary
-                    : 'inherit',
-                  '&:hover': {
-                    backgroundColor: theme.palette.hover.primary,
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <HomeIcon sx={{ color: theme.palette.primary.main }} />
-                </ListItemIcon>
-                <ListItemText primary='Admin' />
-              </ListItem>
+              <>
+                <ListItem
+                  button
+                  onClick={() => navigate('/admin')}
+                  sx={{
+                    cursor: 'pointer',
+                    backgroundColor: isActive('/admin')
+                      ? theme.palette.hover.primary
+                      : 'inherit',
+                    '&:hover': {
+                      backgroundColor: theme.palette.hover.primary,
+                    },
+                  }}
+                >
+                  <ListItemIcon>
+                    <HomeIcon sx={{ color: theme.palette.primary.main }} />
+                  </ListItemIcon>
+                  <ListItemText primary='Admin' />
+                </ListItem>
+                <ListItem
+                  button
+                  onClick={() => navigate('/rewards')}
+                  sx={{
+                    cursor: 'pointer',
+                    backgroundColor: isActive('/rewards')
+                      ? theme.palette.hover.primary
+                      : 'inherit',
+                    '&:hover': {
+                      backgroundColor: theme.palette.hover.primary,
+                    },
+                  }}
+                >
+                  <ListItemIcon>
+                    <AttachMoneyIcon
+                      sx={{ color: theme.palette.primary.main }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText primary='Rewards' />
+                </ListItem>
+              </>
             )}
 
             <ListItem

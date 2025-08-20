@@ -1,6 +1,8 @@
 import {
+  Backdrop,
   Box,
   Button,
+  CircularProgress,
   FormControl,
   TextField,
   Typography,
@@ -13,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useApiStore } from '../store/apiStore';
 import { useAppStateStore } from '../store/authStore';
+import { Toaster } from 'react-hot-toast';
 
 const registerInitialValues = {
   first_name: '',
@@ -78,10 +81,12 @@ const Register = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { apiUrls } = useApiStore();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleRegisterSubmit = async (values) => {
     console.log('registration submitted:', values);
     try {
+      setIsLoading(true);
       console.log(apiUrls.register);
       const response = await fetch(apiUrls.register, {
         method: 'POST',
@@ -106,10 +111,21 @@ const Register = () => {
       navigate('/');
     } catch (error) {
       console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
     <>
+      <Toaster position='top-right' reverseOrder={false} />
+      <Box sx={{ width: '100%' }}>
+        <Backdrop
+          sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={isLoading}
+        >
+          <CircularProgress color='inherit' />
+        </Backdrop>
+      </Box>
       <Box
         sx={{
           display: 'flex',

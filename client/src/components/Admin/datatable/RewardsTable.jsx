@@ -14,6 +14,7 @@ import {
   TableRow,
   TableCell,
   IconButton,
+  TextField,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -28,9 +29,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStateStore } from '../../../store/authStore';
 import CustomDialog from '../popups components/CustomDialog';
 import { useMediaStore } from '../../../store/mediaStore';
+
+import { postRewardSubmission } from '../../../helpers/postFunctions';
 import RewardForms from '../Forms/RewardForms';
 
-const AdminSubmissionsTable = ({ data, onStatusChange }) => {
+const RewardsTable = ({ data, onStatusChange }) => {
   const authUser = useAppStateStore((state) => state.authUser);
   const setIsLoading = useMediaStore((state) => state.setIsLoading);
 
@@ -44,11 +47,12 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   const [openExifDialog, setOpenExifDialog] = useState(false);
   const [selectedExif, setSelectedExif] = useState(null);
 
+  const [openUserDialog, setOpenUserDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
-  const [openUserDialog, setOpenUserDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [openRewardsDialog, setOpenRewardsDialog] = useState(false);
 
   const { apiUrls } = useApiStore();
@@ -105,6 +109,30 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   const handleCloseUserDialog = () => {
     setSelectedUser(null);
     setOpenUserDialog(false);
+  };
+
+  //delete dialog
+  // Open delete dialog
+  const handleOpenDeleteDialog = (id) => {
+    setDeleteId(id);
+    setOpenDeleteDialog(true);
+  };
+
+  // Confirm delete
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await handleSubmissionDelete(`${apiUrls.deleteSubmission}`, deleteId);
+      toast.success('Submission deleted successfully!');
+      queryClient.invalidateQueries(['submissions']);
+    }
+    setOpenDeleteDialog(false);
+    setDeleteId(null);
+  };
+
+  // Cancel delete
+  const handleCancelDelete = () => {
+    setOpenDeleteDialog(false);
+    setDeleteId(null);
   };
 
   // Transform API data
@@ -221,7 +249,6 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
             color='success'
             size='small'
             onClick={() => handleOpenRewards(params.row)}
-            disabled={params.row.status !== 'Approved'}
           >
             <MonetizationOnIcon />
           </IconButton>
@@ -236,30 +263,6 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
       ),
     },
   ];
-
-  //delete dialog
-  // Open delete dialog
-  const handleOpenDeleteDialog = (id) => {
-    setDeleteId(id);
-    setOpenDeleteDialog(true);
-  };
-
-  // Confirm delete
-  const handleConfirmDelete = async () => {
-    if (deleteId) {
-      await handleSubmissionDelete(`${apiUrls.deleteSubmission}`, deleteId);
-      toast.success('Submission deleted successfully!');
-      queryClient.invalidateQueries(['fetch-admin-submissions']);
-    }
-    setOpenDeleteDialog(false);
-    setDeleteId(null);
-  };
-
-  // Cancel delete
-  const handleCancelDelete = () => {
-    setOpenDeleteDialog(false);
-    setDeleteId(null);
-  };
 
   const { mutate: changeStatus, isLoading: isChanging } = useMutation({
     mutationFn: async ({ id, status }) => {
@@ -276,23 +279,16 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
         payload
       );
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success('Status updated successfully!');
-
-      await Promise.all([
-        queryClient.invalidateQueries(['fetch-admin-submissions']),
-        queryClient.invalidateQueries(['fetch-admin-rewards-submissions']),
-      ]);
-
+      queryClient.invalidateQueries(['fetch-admin-submissions']); // ✅ refetch submissions table
       setIsLoading(false);
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to update status');
     },
   });
-  useEffect(() => {
-    console.log('admin data', data);
-  }, []);
+
   // open rewards dialog
   const handleOpenRewards = (submission) => {
     console.log(submission);
@@ -303,6 +299,9 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   const handleCloseRewards = () => {
     setOpenRewardsDialog(false);
   };
+  useEffect(() => {
+    console.log('admin data', data);
+  }, []);
 
   return (
     <>
@@ -375,6 +374,29 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
           )}
         </Typography>
       </CustomDialog>
+      {/* Delete Confirmation Dialog */}
+      <CustomDialog
+        open={openDeleteDialog}
+        onClose={handleCancelDelete}
+        title='Confirm Deletion'
+        actions={
+          <>
+            <Button onClick={handleCancelDelete}>Cancel</Button>
+            <Button
+              onClick={handleConfirmDelete}
+              variant='contained'
+              color='error'
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <Typography>
+          Are you sure you want to delete submission{' '}
+          <strong>ID {deleteId}</strong>? This action cannot be undone.
+        </Typography>
+      </CustomDialog>
 
       {/* EXIF Data Dialog */}
       <CustomDialog
@@ -442,29 +464,6 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
         )}
       </CustomDialog>
 
-      {/* Delete Confirmation Dialog */}
-      <CustomDialog
-        open={openDeleteDialog}
-        onClose={handleCancelDelete}
-        title='Confirm Deletion'
-        actions={
-          <>
-            <Button onClick={handleCancelDelete}>Cancel</Button>
-            <Button
-              onClick={handleConfirmDelete}
-              variant='contained'
-              color='error'
-            >
-              Delete
-            </Button>
-          </>
-        }
-      >
-        <Typography>
-          Are you sure you want to delete submission{' '}
-          <strong>ID {deleteId}</strong>? This action cannot be undone.
-        </Typography>
-      </CustomDialog>
       {/* Rewards Dialog */}
       <CustomDialog
         open={openRewardsDialog}
@@ -493,76 +492,4 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
   );
 };
 
-export default AdminSubmissionsTable;
-
-// {
-//     "id": 1,
-//     "isApproved": 0,
-//     "images": [
-//         {
-//             "id": 1,
-//             "filename": "IMG_4408.jpg",
-//             "exif": {
-//                 "filename": "IMG_4408.jpg",
-//                 "geolocation": {
-//                     "lat": 13.388988888888889,
-//                     "lon": 121.18284722222222
-//                 },
-//                 "dateTaken": "August 14, 2025 at 09:28:38 UTC",
-//                 "dateUploaded": "August 14, 2025 at 01:35:04 PM (Asia/Manila)",
-//                 "locationName": "Calapan, Oriental Mindoro, Mimaropa, Philippines",
-//                 "exifData": {
-//                     "Make": "Apple",
-//                     "Model": "iPhone 15 Pro Max",
-//                     "Orientation": 6,
-//                     "XResolution": 72,
-//                     "YResolution": 72,
-//                     "ResolutionUnit": 2,
-//                     "Software": "18.5",
-//                     "ModifyDate": 1755163718,
-//                     "HostComputer": "iPhone 15 Pro Max",
-//                     "GPSLatitudeRef": "N",
-//                     "GPSLatitude": 13.388988888888889,
-//                     "GPSLongitudeRef": "E",
-//                     "GPSLongitude": 121.18284722222222,
-//                     "GPSAltitudeRef": 0,
-//                     "GPSAltitude": 5.478384019081694,
-//                     "GPSSpeedRef": "K",
-//                     "GPSSpeed": 0,
-//                     "GPSImgDirectionRef": "T",
-//                     "GPSImgDirection": 20.016628251564043,
-//                     "GPSDestBearingRef": "T",
-//                     "GPSDestBearing": 20.016628251564043,
-//                     "GPSDateStamp": "2025:08:14",
-//                     "GPSHPositioningError": 9.687959025898724,
-//                     "ExposureTime": 0.025,
-//                     "FNumber": 1.7799999713880652,
-//                     "ExposureProgram": 2,
-//                     "ISO": 1000,
-//                     "DateTimeOriginal": 1755163718,
-//                     "CreateDate": 1755163718,
-//                     "undefined": "+08:00",
-//                     "ShutterSpeedValue": 5.321524201853759,
-//                     "ApertureValue": 1.6637544366004915,
-//                     "BrightnessValue": -0.45888591485278524,
-//                     "ExposureCompensation": 0.33539035466185535,
-//                     "MeteringMode": 5,
-//                     "Flash": 16,
-//                     "FocalLength": 6.764999866370901,
-//                     "SubSecTimeOriginal": "858",
-//                     "SubSecTimeDigitized": "858",
-//                     "ColorSpace": 65535,
-//                     "ExifImageWidth": 5712,
-//                     "ExifImageHeight": 4284,
-//                     "SensingMethod": 2,
-//                     "ExposureMode": 0,
-//                     "WhiteBalance": 0,
-//                     "FocalLengthIn35mmFormat": 24,
-//                     "LensMake": "Apple",
-//                     "LensModel": "iPhone 15 Pro Max back triple camera 6.765mm f/1.78"
-//                 }
-//             },
-//             "imageBase64": ""
-//         }
-//     ]
-// }
+export default RewardsTable;

@@ -44,3 +44,24 @@ export const handleSubmissionDelete = async (url, submissionId) => {
     throw error;
   }
 };
+
+export const postRewardSubmission = async (url, payload) => {
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+
+      body: payload,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in handleRewardSubmission:', error);
+    throw error;
+  }
+};
