@@ -130,7 +130,7 @@ export const deleteSubmission = async (req, res) => {
 
 export const submitRewardHistory = async (req, res) => {
   try {
-    const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number } = req.body;
+    const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number,submitted_by } = req.body;
     const file = req.file;  
     console.log(req.body);
     const compressedBuffer = await sharp(file.buffer)
@@ -148,6 +148,7 @@ export const submitRewardHistory = async (req, res) => {
   reward_description,
   reward_receipt: dataUri,
   reward_reference_number,
+  submitted_by
 });
 
     res.status(200).json({ message: 'Reward history submitted successfully' });
