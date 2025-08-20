@@ -17,6 +17,7 @@ import sharp from 'sharp';
     );
   });
 
+
   
   const user = await User.query().findById(submissions[0].submittedBy);
 
@@ -37,9 +38,38 @@ const formatted = await Promise.all(
   submissions.map(async sub => {
     const user = await User.query()
       .findById(sub.submittedBy);
- 
 
-    const formattedUser = {
+      const rewarded = await RewardHistory.query().findById(sub.id);
+      let formattedUser = null;
+      if(rewarded)
+        {
+
+     formattedUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      mobile_number: user.mobileNumber,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      role: user.role,
+      reward_details: rewarded,
+      images: sub.images.map(img => ({
+        id: img.id,
+        filename: img.filename,
+        exif: img.imageExifData
+          ? JSON.parse(img.imageExifData)
+          : null,
+        imageBase64: img.imageData
+          ? `data:${img.mimeType};base64,${img.imageData}`
+          : null,
+      })),
+    };
+        }
+
+        else 
+          {
+
+     formattedUser = {
       id: user.id,
       name: user.name,
       email: user.email,
@@ -58,6 +88,9 @@ const formatted = await Promise.all(
           : null,
       })),
     };
+          }
+ 
+
 
     return {
       id: sub.id,
