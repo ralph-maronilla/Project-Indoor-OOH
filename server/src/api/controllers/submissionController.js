@@ -5,7 +5,7 @@ import sharp from 'sharp';
   export const getSubmissions = async (req, res) => {
   try {
   const submissions = await Submission.query()
-  .select('id', 'isApproved', 'status','submitted_by')
+  .select('id', 'isApproved', 'isRewarded', 'status','submitted_by')
   .withGraphFetched('images')
   .modifyGraph('images', builder => {
     builder.select(
@@ -63,6 +63,7 @@ const formatted = await Promise.all(
       id: sub.id,
       submitted_by: formattedUser,
       isApproved: sub.isApproved,
+      isRewarded: sub.isRewarded,
       status: sub.status,
       images: sub.images.map(img => ({
         id: img.id,
