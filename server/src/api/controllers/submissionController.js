@@ -5,7 +5,7 @@ import sharp from 'sharp';
   export const getSubmissions = async (req, res) => {
   try {
   const submissions = await Submission.query()
-  .select('id', 'isApproved', 'status','submitted_by')
+  .select('id', 'isApproved', 'isRewarded', 'status','submitted_by')
   .withGraphFetched('images')
   .modifyGraph('images', builder => {
     builder.select(
@@ -63,6 +63,7 @@ const formatted = await Promise.all(
       id: sub.id,
       submitted_by: formattedUser,
       isApproved: sub.isApproved,
+      isRewarded: sub.isRewarded,
       status: sub.status,
       images: sub.images.map(img => ({
         id: img.id,
@@ -107,6 +108,8 @@ export const processSubmission = async (req, res) => {
     }
     await submission.$query().update();
     res.status(200).json({ message: 'Submission processed successfully' });
+
+
   } catch (err) {
     console.error('Error processing submission:', err);
     res.status(500).json({ error: 'Failed to process submission' });
@@ -130,7 +133,7 @@ export const deleteSubmission = async (req, res) => {
 
 export const submitRewardHistory = async (req, res) => {
   try {
-    const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number,submitted_by } = req.body;
+    const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number,submitted_by,submission_id } = req.body;
     const file = req.file;  
     console.log(req.body);
     const compressedBuffer = await sharp(file.buffer)
@@ -148,13 +151,31 @@ export const submitRewardHistory = async (req, res) => {
   reward_description,
   reward_receipt: dataUri,
   reward_reference_number,
-  submitted_by
+  submitted_by,
+  submission_id
 });
 
+//  const images = await UploadedImage.query().select(
+//       'id',
+//       'filename',
+//       'mime_type',
+//       'image_data',
+//       'image_exif_data'
+//     ).where('user_id', userId);
+
+   await Submission.query()
+  .findById(submission_id)
+  .patch({
+    isRewarded: true
+  });
+
+
     res.status(200).json({ message: 'Reward history submitted successfully' });
+        console.log("Sent status:", res.statusCode);
   } catch (err) {
     console.error('Error submitting reward history:', err);
     res.status(500).json({ error: 'Failed to submit reward history' });
+        console.log("Sent status:", res.statusCode);
   }
 }
 
