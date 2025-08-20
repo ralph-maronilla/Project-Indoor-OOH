@@ -134,6 +134,32 @@ export const deleteSubmission = async (req, res) => {
 export const submitRewardHistory = async (req, res) => {
   try {
     const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number,submitted_by,submission_id } = req.body;
+    
+   const submission = await Submission.query()
+  .findById(submission_id)
+  .select('isRewarded','isApproved');
+
+if (!submission) {
+  return res.status(404).json({
+    message: 'Submission not found'
+  });
+}
+
+if (submission.isRewarded === 1) {
+  return res.status(400).json({
+    message: 'This submission has already been awarded'
+  });
+}
+
+if(submission.isApproved === 0)
+  {
+      return res.status(400).json({
+    message: 'This submission is either Pending or Denied'
+  });
+  }
+    
+  
+
     const file = req.file;  
     console.log(req.body);
     const compressedBuffer = await sharp(file.buffer)
