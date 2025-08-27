@@ -13,6 +13,7 @@ router.get('/getSubmissions', getSubmissions);
 router.post('/submitRewardHistory',upload.single('image'), submitRewardHistory);
 router.get('/getRewardHistory', getRewardHistory);
 router.post('/resetAllSubmissionToPending', resetAllSubmissionToPending);
-router.post('/resetSubmissionStatusToPending', resetSubmissionStatusToPending);
+router.post('/resetSubmissionStatusToPending/:submissionId', resetSubmissionStatusToPending);
+
 
 export default router;

@@ -251,26 +251,38 @@ export const getRewardHistory = async (req, res) => {
 export const resetSubmissionStatusToPending = async (req, res) => {
   try {
     const { submissionId } = req.params;
+
+    // Check if submission exists
     const submission = await Submission.query().findById(submissionId);
     if (!submission) {
       return res.status(404).json({ error: 'Submission not found' });
     }
+
+    // Reset fields
     submission.isRewarded = false;
     submission.isApproved = false;
     submission.approved_at = null;
     submission.approved_by = null;
     submission.status = 'Pending';
-    const rewardHistory = await RewardHistory.query().where('submission_id', submissionId);
-    if (rewardHistory.length > 0) {
-      await rewardHistory[0].$query().delete();
-    }
-    await submission.$query().update();
+
+    // Delete all reward history for this submission
+    await RewardHistory.query().delete().where('submission_id', submissionId);
+
+    // Persist changes
+    await submission.$query().patch({
+      isRewarded: submission.isRewarded,
+      isApproved: submission.isApproved,
+      approved_at: submission.approved_at,
+      approved_by: submission.approved_by,
+      status: submission.status,
+    });
+
     res.status(200).json({ message: 'Submission status reset to Pending' });
   } catch (err) {
     console.error('Error resetting submission status:', err);
     res.status(500).json({ error: 'Failed to reset submission status' });
   }
-}
+};
 
 export const resetAllSubmissionToPending = async (req, res) => {
   try {
