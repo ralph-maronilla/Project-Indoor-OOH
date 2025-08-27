@@ -39,7 +39,7 @@ const formatted = await Promise.all(
     const user = await User.query()
       .findById(sub.submittedBy);
 
-      const rewarded = await RewardHistory.query().findById(sub.id);
+      const rewarded = await RewardHistory.query().where('submission_id', sub.id).first();
       let formattedUser = null;
       if(rewarded)
         {
@@ -245,6 +245,52 @@ export const getRewardHistory = async (req, res) => {
   } catch (err) {
     console.error('Error fetching reward history:', err);
     res.status(500).json({ error: 'Failed to fetch reward history' });
+  }
+}
+
+export const resetSubmissionStatusToPending = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+    const submission = await Submission.query().findById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    submission.isRewarded = false;
+    submission.isApproved = false;
+    submission.approved_at = null;
+    submission.approved_by = null;
+    submission.status = 'Pending';
+    const rewardHistory = await RewardHistory.query().where('submission_id', submissionId);
+    if (rewardHistory.length > 0) {
+      await rewardHistory[0].$query().delete();
+    }
+    await submission.$query().update();
+    res.status(200).json({ message: 'Submission status reset to Pending' });
+  } catch (err) {
+    console.error('Error resetting submission status:', err);
+    res.status(500).json({ error: 'Failed to reset submission status' });
+  }
+}
+
+export const resetAllSubmissionToPending = async (req, res) => {
+  try {
+    const submissions = await Submission.query();
+    for (const submission of submissions) {
+      submission.isRewarded = false;
+      submission.isApproved = false;
+      submission.approved_at = null;
+      submission.approved_by = null;
+      submission.status = 'Pending';
+      const rewardHistory = await RewardHistory.query().where('submission_id', submission.id);
+      if (rewardHistory.length > 0) {
+        await rewardHistory[0].$query().delete();
+      }
+      await submission.$query().update();
+    }
+    res.status(200).json({ message: 'All submissions reset to Pending' });
+  } catch (err) {
+    console.error('Error resetting all submissions:', err);
+    res.status(500).json({ error: 'Failed to reset all submissions' });
   }
 }
 
