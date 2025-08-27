@@ -266,7 +266,7 @@ export const resetSubmissionStatusToPending = async (req, res) => {
     submission.status = 'Pending';
 
     // Delete all reward history for this submission
-    await RewardHistory.query().delete().where('submission_id', submissionId);
+    await RewardHistory.query().delete().where('submissionId', submissionId);
 
     // Persist changes
     await submission.$query().patch({
@@ -293,7 +293,7 @@ export const resetAllSubmissionToPending = async (req, res) => {
       submission.approved_at = null;
       submission.approved_by = null;
       submission.status = 'Pending';
-      const rewardHistory = await RewardHistory.query().where('submission_id', submission.id);
+      const rewardHistory = await RewardHistory.query().where('submissionId', submission.id);
       if (rewardHistory.length > 0) {
         await rewardHistory[0].$query().delete();
       }
