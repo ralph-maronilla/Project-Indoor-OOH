@@ -19,15 +19,15 @@ const Rewards = () => {
   const { isLoading, setIsLoading } = useMediaStore();
 
   const fetchAllSubmissions = async () => {
-    let isApprovedArray = [];
+    let isRewardedArray = [];
     const response = await getSubmissions(getAllSubmissions, 'GET');
     const data = await response.data;
     data.map((item) => {
-      item.isApproved === 1 ? isApprovedArray.push(item) : [];
+      item.isRewarded === 1 ? isRewardedArray.push(item) : [];
     });
-    console.log('is approved', isApprovedArray);
+    console.log('is Rewarded', isRewardedArray);
 
-    return isApprovedArray;
+    return isRewardedArray;
   };
 
   const {
@@ -71,7 +71,7 @@ const Rewards = () => {
             color: theme.palette.text.primary,
           }}
         >
-          <Typography variant='h4'>List of approved submissions</Typography>
+          <Typography variant='h4'>List of rewarded submissions</Typography>
 
           {/* <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
           <CardItem name='Total Photos' value='100' />

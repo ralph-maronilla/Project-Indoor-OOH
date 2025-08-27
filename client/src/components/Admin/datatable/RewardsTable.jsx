@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Box,
@@ -32,6 +32,7 @@ import { useMediaStore } from '../../../store/mediaStore';
 
 import { postRewardSubmission } from '../../../helpers/postFunctions';
 import RewardForms from '../Forms/RewardForms';
+import Lightboxdialog from '../popups components/Lightboxdialog';
 
 const RewardsTable = ({ data, onStatusChange }) => {
   const authUser = useAppStateStore((state) => state.authUser);
@@ -54,6 +55,8 @@ const RewardsTable = ({ data, onStatusChange }) => {
   const [deleteId, setDeleteId] = useState(null);
 
   const [openRewardsDialog, setOpenRewardsDialog] = useState(false);
+  const [openRewardDetailsDialog, setOpenRewardDetailsDialog] = useState(false);
+  const [selectedReward, setSelectedReward] = useState(null);
 
   const { apiUrls } = useApiStore();
   const queryClient = useQueryClient();
@@ -136,133 +139,6 @@ const RewardsTable = ({ data, onStatusChange }) => {
   };
 
   // Transform API data
-  const rows = data.map((item) => {
-    const img = item.images?.[0];
-    return {
-      id: item.id,
-      filename: img?.filename || '',
-      location: img?.exif?.locationName || 'N/A',
-      dateTaken: img?.exif?.dateTaken || 'N/A',
-      dateUploaded: img?.exif?.dateUploaded || 'N/A',
-      imageBase64: img?.imageBase64 || '',
-      status: item.status, // 1, -1, 0
-      exifData: img?.exif?.exifData || {},
-      email: item?.submitted_by?.email,
-      submitted_by: item?.submitted_by || {},
-    };
-  });
-
-  // Columns for DataGrid
-  const columns = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    {
-      field: 'imageBase64',
-      headerName: 'Image',
-      width: 120,
-      renderCell: (params) => {
-        if (!params.value) return 'No Image';
-        // console.log('params.value', params.value);
-
-        return (
-          <Avatar
-            variant='square'
-            src={params.value}
-            alt='Uploaded'
-            sx={{
-              width: 60,
-              height: 60,
-              cursor: 'pointer',
-              border: '1px solid #ccc',
-            }}
-            onClick={() => handleOpenLightbox(params.value)}
-          />
-        );
-      },
-    },
-    { field: 'filename', headerName: 'Filename', width: 200 },
-    {
-      field: 'email',
-      headerName: 'Email',
-      width: 220,
-    },
-    {
-      field: 'user_details',
-      headerName: 'User Details',
-      width: 150,
-      renderCell: (params) => (
-        // <IconButton
-        //   color='primary'
-        //   size='small'
-        //   onClick={() => handleOpenUserDialog(params.row.submitted_by)}
-        // >
-        <Button onClick={() => handleOpenUserDialog(params.row.submitted_by)}>
-          View Details
-        </Button>
-        // </IconButton>
-      ),
-    },
-    { field: 'location', headerName: 'Location', width: 200 },
-    { field: 'dateTaken', headerName: 'Date Taken', width: 220 },
-    { field: 'dateUploaded', headerName: 'Date Uploaded', width: 260 },
-    {
-      field: 'exif',
-      headerName: 'EXIF Data',
-      width: 150,
-      renderCell: (params) => (
-        <Button
-          variant='outlined'
-          size='small'
-          onClick={() => handleOpenExif(params.row.exifData)}
-        >
-          View EXIF
-        </Button>
-      ),
-    },
-
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 150,
-      renderCell: (params) => (
-        <Select
-          value={params.value}
-          size='small'
-          onChange={(e) => handleStatusSelect(params.row, e.target.value)}
-          sx={{ width: '100%' }}
-        >
-          <MenuItem disabled={params.value === 'Denied'} value='Pending'>
-            Pending
-          </MenuItem>
-          <MenuItem value='Approved'>Approved</MenuItem>
-          <MenuItem value='Denied'>Denied</MenuItem>
-        </Select>
-      ),
-    },
-
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 150,
-      renderCell: (params) => (
-        <>
-          <IconButton
-            color='success'
-            size='small'
-            onClick={() => handleOpenRewards(params.row)}
-          >
-            <MonetizationOnIcon />
-          </IconButton>
-          <IconButton
-            color='error'
-            size='small'
-            onClick={() => handleOpenDeleteDialog(params.row.id)}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </>
-      ),
-    },
-  ];
 
   const { mutate: changeStatus, isLoading: isChanging } = useMutation({
     mutationFn: async ({ id, status }) => {
@@ -299,9 +175,176 @@ const RewardsTable = ({ data, onStatusChange }) => {
   const handleCloseRewards = () => {
     setOpenRewardsDialog(false);
   };
-  useEffect(() => {
-    console.log('admin data', data);
-  }, []);
+  const handleOpenRewardDialog = (reward) => {
+    setSelectedReward(reward);
+    setOpenRewardDetailsDialog(true);
+  };
+
+  const handleCloseRewardDialog = () => {
+    setOpenRewardDetailsDialog(false);
+    setSelectedReward(null);
+  };
+  // useEffect(() => {
+  //   console.log('admin data', data);
+  // }, []);
+  const formatExifDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const cleaned = dateStr.replace(' at ', ' ');
+    const date = new Date(cleaned);
+    return isNaN(date.getTime())
+      ? 'Invalid Date'
+      : date.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+  };
+  const rows = useMemo(() => {
+    return data.map((item) => {
+      const img = item.images?.[0];
+      return {
+        id: item.id,
+        filename: img?.filename || '',
+        location: img?.exif?.locationName || 'N/A',
+        dateTaken: formatExifDate(img?.exif?.dateTaken),
+        dateUploaded: formatExifDate(img?.exif?.dateUploaded),
+        imageBase64: img?.imageBase64 || '',
+        status: item.status,
+        exifData: img?.exif?.exifData || {},
+        email: item?.submitted_by?.email || '',
+        submitted_by: item?.submitted_by || {},
+        rewarded_date: item?.submitted_by?.reward_details?.createdAt
+          ? new Date(
+              item?.submitted_by?.reward_details?.createdAt
+            ).toLocaleString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            })
+          : '',
+        isRewarded: item.isRewarded,
+      };
+    });
+  }, [data]);
+  // Columns for DataGrid
+  const columns = useMemo(
+    () => [
+      { field: 'id', headerName: 'ID', width: 70 },
+      {
+        field: 'imageBase64',
+        headerName: 'Image',
+        width: 120,
+        renderCell: (params) => {
+          if (!params.value) return 'No Image';
+          return (
+            <Avatar
+              variant='square'
+              src={params.value}
+              alt='Uploaded'
+              sx={{
+                width: 60,
+                height: 60,
+                cursor: 'pointer',
+                border: '1px solid #ccc',
+              }}
+              onClick={() => handleOpenLightbox(params.value)}
+            />
+          );
+        },
+      },
+      { field: 'filename', headerName: 'Filename', width: 200 },
+      { field: 'email', headerName: 'Email', width: 220 },
+      {
+        field: 'user_details',
+        headerName: 'User Details',
+        width: 150,
+        renderCell: (params) => (
+          <Button onClick={() => handleOpenUserDialog(params.row.submitted_by)}>
+            View Details
+          </Button>
+        ),
+      },
+      { field: 'location', headerName: 'Location', width: 200 },
+      { field: 'dateTaken', headerName: 'Date Taken', width: 220 },
+      { field: 'dateUploaded', headerName: 'Date Uploaded', width: 260 },
+      {
+        field: 'exif',
+        headerName: 'EXIF Data',
+        width: 150,
+        renderCell: (params) => (
+          <Button
+            variant='outlined'
+            size='small'
+            onClick={() => handleOpenExif(params.row.exifData)}
+          >
+            View EXIF
+          </Button>
+        ),
+      },
+      {
+        field: 'status',
+        headerName: 'Status',
+        width: 150,
+        renderCell: (params) => (
+          <Select
+            value={params.value}
+            size='small'
+            onChange={(e) => handleStatusSelect(params.row, e.target.value)}
+            sx={{ width: '100%' }}
+          >
+            <MenuItem disabled={params.value === 'Denied'} value='Pending'>
+              Pending
+            </MenuItem>
+            <MenuItem value='Approved'>Approved</MenuItem>
+            <MenuItem value='Denied'>Denied</MenuItem>
+          </Select>
+        ),
+      },
+      { field: 'rewarded_date', headerName: 'Rewarded Date', width: 200 },
+      {
+        field: 'isRewarded',
+        headerName: 'Rewarded',
+        width: 150,
+        renderCell: (params) => (
+          <Chip
+            label={params.value === 1 ? 'Rewarded' : 'Not Rewarded'}
+            onClick={() => handleOpenRewardDialog(params.row)}
+            color={params.value === 1 ? 'success' : 'error'}
+          />
+        ),
+      },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 150,
+        renderCell: (params) => (
+          <>
+            <IconButton
+              color='error'
+              size='small'
+              onClick={() => handleOpenDeleteDialog(params.row.id)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </>
+        ),
+      },
+    ],
+    [
+      handleOpenLightbox,
+      handleOpenUserDialog,
+      handleOpenExif,
+      handleStatusSelect,
+      handleOpenRewardDialog,
+      handleOpenDeleteDialog,
+    ]
+  );
 
   return (
     <>
@@ -316,33 +359,12 @@ const RewardsTable = ({ data, onStatusChange }) => {
       </Box>
 
       {/* Lightbox */}
-      <CustomDialog
+
+      <Lightboxdialog
         open={openLightbox}
         onClose={handleCloseLightbox}
-        maxWidth='lg'
-        hideTitle
-      >
-        {selectedImage && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              backgroundColor: '#000',
-            }}
-          >
-            <img
-              src={selectedImage}
-              alt='Preview'
-              style={{
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                borderRadius: '8px',
-              }}
-            />
-          </Box>
-        )}
-      </CustomDialog>
+        selectedImage={selectedImage}
+      />
 
       {/* Confirmation Dialog */}
       <CustomDialog
@@ -487,6 +509,84 @@ const RewardsTable = ({ data, onStatusChange }) => {
           selectedUser={selectedUser}
           handleCloseRewards={handleCloseRewards}
         />
+      </CustomDialog>
+      {/* Reward Details Dialog */}
+      <CustomDialog
+        open={openRewardDetailsDialog}
+        onClose={handleCloseRewardDialog}
+        title='Reward Details'
+        maxWidth='sm'
+        actions={<Button onClick={handleCloseRewardDialog}>Close</Button>}
+      >
+        {selectedReward ? (
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ width: '100%' }}>
+              <Typography>
+                <strong>Email:</strong> {selectedReward.submitted_by?.email}
+              </Typography>
+              <Typography>
+                <strong>Fullname:</strong>{' '}
+                {selectedReward.submitted_by?.first_name}{' '}
+                {selectedReward.submitted_by?.last_name}
+              </Typography>
+
+              <Typography>
+                <strong>Mobile:</strong>{' '}
+                {selectedReward?.submitted_by.mobile_number}
+              </Typography>
+
+              <Typography>
+                <strong>Rewarded:</strong>{' '}
+                {selectedReward.isRewarded ? 'Yes' : 'No'}
+              </Typography>
+              <Typography>
+                <strong>Reward Amount:</strong>{' '}
+                {selectedReward?.submitted_by?.reward_details?.rewardAmount}
+              </Typography>
+              <Typography>
+                <strong>Reward Description:</strong>{' '}
+                {
+                  selectedReward?.submitted_by?.reward_details
+                    ?.rewardDescription
+                }
+              </Typography>
+              <Typography>
+                <strong>Reference Number:</strong>{' '}
+                {
+                  selectedReward?.submitted_by?.reward_details
+                    ?.rewardReferenceNumber
+                }
+              </Typography>
+              <Box sx={{ width: '100%' }}>
+                {selectedReward?.submitted_by?.reward_details && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      // justifyContent: 'center',
+                      // alignItems: 'center',
+                      // backgroundColor: '#000',
+                    }}
+                  >
+                    <img
+                      src={
+                        selectedReward?.submitted_by?.reward_details
+                          ?.rewardReceipt
+                      }
+                      alt='Preview'
+                      style={{
+                        maxWidth: '50%',
+                        maxHeight: '100%',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          </Box>
+        ) : (
+          <Typography>No reward details available.</Typography>
+        )}
       </CustomDialog>
     </>
   );

@@ -539,34 +539,69 @@ const AdminSubmissionsTable = ({ data, onStatusChange }) => {
         actions={<Button onClick={handleCloseRewardDialog}>Close</Button>}
       >
         {selectedReward ? (
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
-            <Box sx={{ width: '70%' }}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ width: '100%' }}>
               <Typography>
-                <strong>Email:</strong> {selectedReward.email}
+                <strong>Email:</strong> {selectedReward.submitted_by?.email}
               </Typography>
               <Typography>
-                <strong>First Name:</strong> {selectedReward.first_name}
+                <strong>Fullname:</strong>{' '}
+                {selectedReward.submitted_by?.first_name}{' '}
+                {selectedReward.submitted_by?.last_name}
               </Typography>
+
               <Typography>
-                <strong>Last Name:</strong> {selectedReward.last_name}
+                <strong>Mobile:</strong>{' '}
+                {selectedReward?.submitted_by.mobile_number}
               </Typography>
-              <Typography>
-                <strong>Mobile:</strong> {selectedReward.mobile_number}
-              </Typography>
-              <Typography>
-                <strong>Role:</strong> {selectedReward.role}
-              </Typography>
+
               <Typography>
                 <strong>Rewarded:</strong>{' '}
                 {selectedReward.isRewarded ? 'Yes' : 'No'}
               </Typography>
-            </Box>
-            <Box sx={{ width: '30%' }}>
-              <Avatar
-                variant='square'
-                src={selectedReward.user_image}
-                sx={{ width: 100, height: 100 }}
-              />
+              <Typography>
+                <strong>Reward Amount:</strong>{' '}
+                {selectedReward?.submitted_by?.reward_details?.rewardAmount}
+              </Typography>
+              <Typography>
+                <strong>Reward Description:</strong>{' '}
+                {
+                  selectedReward?.submitted_by?.reward_details
+                    ?.rewardDescription
+                }
+              </Typography>
+              <Typography>
+                <strong>Reference Number:</strong>{' '}
+                {
+                  selectedReward?.submitted_by?.reward_details
+                    ?.rewardReferenceNumber
+                }
+              </Typography>
+              <Box sx={{ width: '100%' }}>
+                {selectedReward?.submitted_by?.reward_details && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      // justifyContent: 'center',
+                      // alignItems: 'center',
+                      // backgroundColor: '#000',
+                    }}
+                  >
+                    <img
+                      src={
+                        selectedReward?.submitted_by?.reward_details
+                          ?.rewardReceipt
+                      }
+                      alt='Preview'
+                      style={{
+                        maxWidth: '50%',
+                        maxHeight: '100%',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Box>
         ) : (
