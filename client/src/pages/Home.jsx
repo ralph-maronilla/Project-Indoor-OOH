@@ -1,6 +1,6 @@
 import { Backdrop, Box, CircularProgress } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CardItem from '../components/dashboard/CardItem';
 import AllImageTable from '../components/media/AllImageTable';
@@ -12,25 +12,36 @@ const Home = () => {
   const theme = useTheme();
   const apiUrls = useApiStore((state) => state.apiUrls);
   const { authUser } = useAppStateStore((state) => state);
-  const { getAllImagesByUserId } = apiUrls;
+  const { getAllSubmissionsByUserId } = apiUrls;
   const { isLoading: storeLoading, setIsLoading } = useMediaStore();
 
   // Fetch function for React Query
   const fetchAllImages = async () => {
-    const response = await fetch(`${getAllImagesByUserId}/${authUser?.id}`);
+    const response = await fetch(
+      `${getAllSubmissionsByUserId}/${authUser?.id}`
+    );
     if (!response.ok) {
       throw new Error('Failed to fetch images');
     }
     const data = await response.json();
-    return data?.data.map((item) => ({
-      id: item?.id || 'N/A',
-      filename: item?.filename || 'N/A',
-      imageBase64: item?.imageBase64 || 'N/A',
-      dateTaken: item?.exif?.dateTaken || 'N/A',
-      dateUploaded: item?.exif?.dateUploaded || 'N/A',
-      locationName: item?.exif?.locationName || 'Unknown',
-      latitude: item?.exif?.geolocation?.lat || 'N/A',
-      longitude: item?.exif?.geolocation?.lon || 'N/A',
+
+    // console.log('user submissions', data);
+    // return data?.submissions;
+    return data?.submissions.map((item) => ({
+      user: data.user,
+      images: item.images.map((image, index) => ({
+        id: image?.id ?? `temp-${index}`,
+        filename: image?.filename || 'N/A',
+        imageBase64: image?.imageBase64 || 'N/A',
+        dateTaken: image?.exif?.dateTaken || 'N/A',
+        dateUploaded: image?.exif?.dateUploaded || 'N/A',
+        locationName: image?.exif?.locationName || 'Unknown',
+        latitude: image?.exif?.geolocation?.lat || 'N/A',
+        longitude: image?.exif?.geolocation?.lon || 'N/A',
+      })),
+      isApproved: item.isApproved,
+      isRewarded: item.isRewarded,
+      reward_details: item.reward_details,
     }));
   };
 
@@ -49,13 +60,33 @@ const Home = () => {
   useEffect(() => {
     setIsLoading(queryLoading);
   }, [queryLoading, setIsLoading]);
-  useEffect(() => {
-    console.log('auth user', authUser);
-  });
 
   if (isError) {
     return <p>Error: {error.message}</p>;
   }
+  const approvedSubmissionsCount = allImages.filter(
+    (submission) => submission.isApproved === 1
+  ).length;
+
+  const totalEarnings = useMemo(() => {
+    if (!allImages || allImages.length === 0) return 0;
+
+    return allImages.reduce((total, submission) => {
+      if (
+        submission.isApproved === 1 &&
+        submission.reward_details?.rewardAmount
+      ) {
+        return total + parseFloat(submission.reward_details.rewardAmount);
+      }
+      return total;
+    }, 0);
+  }, [allImages]);
+  const formattedEarnings = isNaN(totalEarnings)
+    ? '₱0.00'
+    : totalEarnings.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'PHP',
+      });
 
   return (
     <>
@@ -79,9 +110,12 @@ const Home = () => {
         }}
       >
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-          <CardItem name='Total Photos' value={allImages.length} />
-          <CardItem name='Total Submissions' value='100' />
-          <CardItem name='Total Rejected' value='100' />
+          <CardItem name='Total Photos Submitted' value={allImages.length} />
+          <CardItem
+            name='Total Approved Submissions'
+            value={approvedSubmissionsCount}
+          />
+          <CardItem name='Total Earnings' value={formattedEarnings} />
         </Box>
         <Box sx={{ width: '100%', height: '500px', marginTop: '50px' }}>
           {allImages && <AllImageTable data={allImages} />}

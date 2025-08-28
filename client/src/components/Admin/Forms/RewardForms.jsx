@@ -184,7 +184,7 @@ const RewardForms = ({ selectedUser, handleCloseRewards }) => {
 
             {/* ✅ GCash Reference Number */}
             <TextField
-              label='GCash Reference Number'
+              label='Transaction Reference Number'
               fullWidth
               size='small'
               name='reward_reference_number'

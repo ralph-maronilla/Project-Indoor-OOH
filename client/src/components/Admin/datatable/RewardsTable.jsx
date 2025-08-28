@@ -297,6 +297,7 @@ const RewardsTable = ({ data, onStatusChange }) => {
             size='small'
             onChange={(e) => handleStatusSelect(params.row, e.target.value)}
             sx={{ width: '100%' }}
+            disabled={params.value === 'Approved'}
           >
             <MenuItem disabled={params.value === 'Denied'} value='Pending'>
               Pending
