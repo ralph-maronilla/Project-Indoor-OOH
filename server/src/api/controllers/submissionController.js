@@ -123,6 +123,80 @@ const formatted = await Promise.all(
   }
 };
 
+export const getSubmissionsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(userId);
+
+    // Fetch all submissions for a given user
+    const submissions = await Submission.query()
+      .where('submittedBy', userId)
+      .select('id', 'isApproved', 'isRewarded', 'status', 'submitted_by')
+      .withGraphFetched('images')
+      .modifyGraph('images', builder => {
+        builder.select('id', 'filename', 'mimeType', 'imageData', 'imageExifData');
+      });
+
+    if (!submissions || submissions.length === 0) {
+      return res.status(404).json({ error: 'No submissions found for this user' });
+    }
+
+    // Fetch user once (not inside map)
+    const user = await User.query().findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Format all submissions
+    const formatted = await Promise.all(
+      submissions.map(async (sub) => {
+        const rewarded = await RewardHistory.query()
+          .where('submission_id', sub.id)
+          .first();
+
+        return {
+          id: sub.id,
+          status: sub.status,
+          isApproved: sub.isApproved,
+          isRewarded: sub.isRewarded,
+          reward_details: rewarded || null,
+          images: sub.images.map(img => ({
+            id: img.id,
+            filename: img.filename,
+            exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+            imageBase64: img.imageData
+              ? `data:${img.mimeType};base64,${img.imageData}`
+              : null,
+          })),
+        };
+      })
+    );
+
+    // Final response structure
+    const response = {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        mobile_number: user.mobileNumber,
+        first_name: user.firstName,
+        last_name: user.lastName,
+        role: user.role,
+        user_image: user.userImage,
+      },
+      submissions: formatted,
+    };
+
+    return res.status(200).json(response);
+
+  } catch (err) {
+    console.error('Error fetching submissions:', err);
+    return res.status(500).json({ error: 'Failed to fetch submissions' });
+  }
+};
+
+
 export const processSubmission = async (req, res) => {
   try {
     const { submissionId, isApproved, userId } = req.body;

@@ -1,5 +1,5 @@
 import express from 'express';
-import {processSubmission, deleteSubmission, getSubmissions,submitRewardHistory,getRewardHistory,resetAllSubmissionToPending,resetSubmissionStatusToPending} from '../controllers/submissionController.js';
+import {processSubmission, deleteSubmission, getSubmissions,submitRewardHistory,getRewardHistory,resetAllSubmissionToPending,resetSubmissionStatusToPending,getSubmissionsByUserId} from '../controllers/submissionController.js';
 import multer from 'multer';
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -14,6 +14,6 @@ router.post('/submitRewardHistory',upload.single('image'), submitRewardHistory);
 router.get('/getRewardHistory', getRewardHistory);
 router.post('/resetAllSubmissionToPending', resetAllSubmissionToPending);
 router.post('/resetSubmissionStatusToPending/:submissionId', resetSubmissionStatusToPending);
-
+router.get('/getSubmissionsByUserId/:userId', getSubmissionsByUserId);
 
 export default router;

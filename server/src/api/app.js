@@ -33,6 +33,7 @@ app.use(
     exposedHeaders: ["Content-Disposition", "Content-Type"],
   })
 );
+app.options("*", cors());
 
 
 // Routes
