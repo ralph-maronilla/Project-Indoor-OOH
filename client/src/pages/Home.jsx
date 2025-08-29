@@ -1,6 +1,6 @@
-import { Backdrop, Box, CircularProgress } from '@mui/material';
+import { Backdrop, Box, CircularProgress, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CardItem from '../components/dashboard/CardItem';
 import AllImageTable from '../components/media/AllImageTable';
@@ -20,29 +20,26 @@ const Home = () => {
     const response = await fetch(
       `${getAllSubmissionsByUserId}/${authUser?.id}`
     );
-    if (!response.ok) {
-      throw new Error('Failed to fetch images');
-    }
     const data = await response.json();
 
-    // console.log('user submissions', data);
-    // return data?.submissions;
-    return data?.submissions.map((item) => ({
-      user: data.user,
-      images: item.images.map((image, index) => ({
-        id: image?.id ?? `temp-${index}`,
-        filename: image?.filename || 'N/A',
-        imageBase64: image?.imageBase64 || 'N/A',
-        dateTaken: image?.exif?.dateTaken || 'N/A',
-        dateUploaded: image?.exif?.dateUploaded || 'N/A',
-        locationName: image?.exif?.locationName || 'Unknown',
-        latitude: image?.exif?.geolocation?.lat || 'N/A',
-        longitude: image?.exif?.geolocation?.lon || 'N/A',
-      })),
-      isApproved: item.isApproved,
-      isRewarded: item.isRewarded,
-      reward_details: item.reward_details,
-    }));
+    return (
+      data?.submissions?.map((item) => ({
+        user: data?.user,
+        images: item?.images?.map((image, index) => ({
+          id: image?.id ?? `temp-${index}`,
+          filename: image?.filename || 'N/A',
+          imageBase64: image?.imageBase64 || 'N/A',
+          dateTaken: image?.exif?.dateTaken || 'N/A',
+          dateUploaded: image?.exif?.dateUploaded || 'N/A',
+          locationName: image?.exif?.locationName || 'Unknown',
+          latitude: image?.exif?.geolocation?.lat || 'N/A',
+          longitude: image?.exif?.geolocation?.lon || 'N/A',
+        })),
+        isApproved: item.isApproved,
+        isRewarded: item.isRewarded,
+        reward_details: item.reward_details,
+      })) ?? []
+    );
   };
 
   // React Query hook
@@ -64,23 +61,23 @@ const Home = () => {
   if (isError) {
     return <p>Error: {error.message}</p>;
   }
+
   const approvedSubmissionsCount = allImages.filter(
     (submission) => submission.isApproved === 1
   ).length;
 
-  const totalEarnings = useMemo(() => {
-    if (!allImages || allImages.length === 0) return 0;
+  // ✅ Compute as number
+  const totalEarnings = allImages.reduce((total, submission) => {
+    if (
+      submission.isApproved === 1 &&
+      submission.reward_details?.rewardAmount
+    ) {
+      return total + parseFloat(submission.reward_details.rewardAmount);
+    }
+    return total;
+  }, 0);
 
-    return allImages.reduce((total, submission) => {
-      if (
-        submission.isApproved === 1 &&
-        submission.reward_details?.rewardAmount
-      ) {
-        return total + parseFloat(submission.reward_details.rewardAmount);
-      }
-      return total;
-    }, 0);
-  }, [allImages]);
+  // ✅ Format safely
   const formattedEarnings = isNaN(totalEarnings)
     ? '₱0.00'
     : totalEarnings.toLocaleString('en-US', {
@@ -117,8 +114,18 @@ const Home = () => {
           />
           <CardItem name='Total Earnings' value={formattedEarnings} />
         </Box>
+
         <Box sx={{ width: '100%', height: '500px', marginTop: '50px' }}>
-          {allImages && <AllImageTable data={allImages} />}
+          {allImages.length === 0 ? (
+            <Typography
+              variant='h6'
+              sx={{ textAlign: 'center', marginTop: '50px' }}
+            >
+              No data yet
+            </Typography>
+          ) : (
+            <AllImageTable data={allImages} />
+          )}
         </Box>
       </Box>
     </>
