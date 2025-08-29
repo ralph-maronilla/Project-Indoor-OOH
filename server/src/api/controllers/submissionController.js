@@ -134,11 +134,11 @@ export const getSubmissionsByUserId = async (req, res) => {
       .select('id', 'isApproved', 'isRewarded', 'status', 'submitted_by')
       .withGraphFetched('images')
       .modifyGraph('images', builder => {
-        builder.select('id', 'filename', 'mimeType', 'imageData', 'imageExifData');
+        builder.select('id', 'filename', 'mimeTsype', 'imageData', 'imageExifData');
       });
 
     if (!submissions || submissions.length === 0) {
-      return res.status(404).json({ error: 'No submissions found for this user' });
+  return res.status(200).json([]);
     }
 
     // Fetch user once (not inside map)
