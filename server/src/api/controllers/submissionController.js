@@ -1,125 +1,108 @@
-import Submission from '../models/Submission.js';
-import User from '../models/User.js';
-import RewardHistory from '../models/RewardHistory.js';
-import sharp from 'sharp';
-  export const getSubmissions = async (req, res) => {
+import Submission from "../models/Submission.js";
+import User from "../models/User.js";
+import RewardHistory from "../models/RewardHistory.js";
+import sharp from "sharp";
+export const getSubmissions = async (req, res) => {
   try {
-  const submissions = await Submission.query()
-  .select('id', 'isApproved', 'isRewarded', 'status','submitted_by')
-  .withGraphFetched('images')
-  .modifyGraph('images', builder => {
-    builder.select(
-      'id',
-      'filename',
-      'mime_type',
-      'image_data',
-      'image_exif_data',
-    );
-  });
+    const submissions = await Submission.query()
+      .select("id", "isApproved", "isRewarded", "status", "submitted_by")
+      .withGraphFetched("images")
+      .modifyGraph("images", (builder) => {
+        builder.select(
+          "id",
+          "filename",
+          "mime_type",
+          "image_data",
+          "image_exif_data"
+        );
+      });
 
+    const user = await User.query().findById(submissions[0].submittedBy);
 
-  
-  const user = await User.query().findById(submissions[0].submittedBy);
+    const userImage = user.userImage;
 
-  const userImage = user.userImage;
-
-  const mappedUser = {
-    name: user.name,
-    email: user.email,
-    mobile_number: user.mobileNumber,
-    first_name: user.firstName,
-    last_name: user.lastName,
-    role: user.role,
-    user_image: userImage
-  };
-
-    
-const formatted = await Promise.all(
-  submissions.map(async sub => {
-    const user = await User.query()
-      .findById(sub.submittedBy);
-
-      const rewarded = await RewardHistory.query().where('submission_id', sub.id).first();
-      let formattedUser = null;
-      if(rewarded)
-        {
-
-     formattedUser = {
-      id: user.id,
+    const mappedUser = {
       name: user.name,
       email: user.email,
       mobile_number: user.mobileNumber,
       first_name: user.firstName,
       last_name: user.lastName,
       role: user.role,
-      reward_details: rewarded,
-      images: sub.images.map(img => ({
-        id: img.id,
-        filename: img.filename,
-        exif: img.imageExifData
-          ? JSON.parse(img.imageExifData)
-          : null,
-        imageBase64: img.imageData
-          ? `data:${img.mimeType};base64,${img.imageData}`
-          : null,
-      })),
+      user_image: userImage,
     };
+
+    const formatted = await Promise.all(
+      submissions.map(async (sub) => {
+        const user = await User.query().findById(sub.submittedBy);
+
+        const rewarded = await RewardHistory.query()
+          .where("submission_id", sub.id)
+          .first();
+        let formattedUser = null;
+        if (rewarded) {
+          formattedUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            mobile_number: user.mobileNumber,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            role: user.role,
+            reward_details: rewarded,
+            images: sub.images.map((img) => ({
+              id: img.id,
+              filename: img.filename,
+              exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+              imageBase64: img.imageData
+                ? `data:${img.mimeType};base64,${img.imageData}`
+                : null,
+            })),
+          };
+        } else {
+          formattedUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            mobile_number: user.mobileNumber,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            role: user.role,
+            images: sub.images.map((img) => ({
+              id: img.id,
+              filename: img.filename,
+              exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+              imageBase64: img.imageData
+                ? `data:${img.mimeType};base64,${img.imageData}`
+                : null,
+            })),
+          };
         }
 
-        else 
-          {
-
-     formattedUser = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      mobile_number: user.mobileNumber,
-      first_name: user.firstName,
-      last_name: user.lastName,
-      role: user.role,
-      images: sub.images.map(img => ({
-        id: img.id,
-        filename: img.filename,
-        exif: img.imageExifData
-          ? JSON.parse(img.imageExifData)
-          : null,
-        imageBase64: img.imageData
-          ? `data:${img.mimeType};base64,${img.imageData}`
-          : null,
-      })),
-    };
-          }
- 
-
-
-    return {
-      id: sub.id,
-      submitted_by: formattedUser,
-      isApproved: sub.isApproved,
-      isRewarded: sub.isRewarded,
-      status: sub.status,
-      images: sub.images.map(img => ({
-        id: img.id,
-        filename: img.filename,
-        exif: img.imageExifData
-          ? JSON.parse(img.imageExifData)
-          : null,
-        imageBase64: img.imageData
-          ? `data:${img.mimeType};base64,${img.imageData}`
-          : null,
-      })),
-    };
-  })
-);
-
+        return {
+          id: sub.id,
+          submitted_by: formattedUser,
+          isApproved: sub.isApproved,
+          isRewarded: sub.isRewarded,
+          status: sub.status,
+          images: sub.images.map((img) => ({
+            id: img.id,
+            filename: img.filename,
+            exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+            imageBase64: img.imageData
+              ? `data:${img.mimeType};base64,${img.imageData}`
+              : null,
+          })),
+        };
+      })
+    );
 
     res.status(200).json({
-      message: 'Submissions retrieved successfully.',
+      message: "Submissions retrieved successfully.",
       data: formatted,
     });
   } catch (err) {
-    console.error('Error fetching submissions:', err);
-    res.status(500).json({ error: 'Failed to fetch submissions' });
+    console.error("Error fetching submissions:", err);
+    res.status(500).json({ error: "Failed to fetch submissions" });
   }
 };
 
@@ -130,29 +113,39 @@ export const getSubmissionsByUserId = async (req, res) => {
 
     // Fetch all submissions for a given user
     const submissions = await Submission.query()
-      .where('submittedBy', userId)
-      .select('id', 'isApproved', 'isRewarded', 'status', 'submitted_by')
-      .withGraphFetched('images')
-      .modifyGraph('images', builder => {
-        builder.select('id', 'filename', 'mimeTsype', 'imageData', 'imageExifData');
+      .where("submittedBy", userId)
+      .select("id", "isApproved", "isRewarded", "status", "submitted_by")
+      .withGraphFetched("images")
+      .modifyGraph("images", (builder) => {
+        builder.select(
+          "id",
+          "filename",
+          "mimeTsype",
+          "imageData",
+          "imageExifData"
+        );
       });
 
     if (!submissions || submissions.length === 0) {
-  return res.status(200).json([]);
+      return res.status(200).json({
+        success: true,
+        data: [],
+        message: "No submissions found",
+      });
     }
 
     // Fetch user once (not inside map)
     const user = await User.query().findById(userId);
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // Format all submissions
     const formatted = await Promise.all(
       submissions.map(async (sub) => {
         const rewarded = await RewardHistory.query()
-          .where('submission_id', sub.id)
+          .where("submission_id", sub.id)
           .first();
 
         return {
@@ -161,7 +154,7 @@ export const getSubmissionsByUserId = async (req, res) => {
           isApproved: sub.isApproved,
           isRewarded: sub.isRewarded,
           reward_details: rewarded || null,
-          images: sub.images.map(img => ({
+          images: sub.images.map((img) => ({
             id: img.id,
             filename: img.filename,
             exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
@@ -189,37 +182,32 @@ export const getSubmissionsByUserId = async (req, res) => {
     };
 
     return res.status(200).json(response);
-
   } catch (err) {
-    console.error('Error fetching submissions:', err);
-    return res.status(500).json({ error: 'Failed to fetch submissions' });
+    console.error("Error fetching submissions:", err);
+    return res.status(500).json({ error: "Failed to fetch submissions" });
   }
 };
-
 
 export const processSubmission = async (req, res) => {
   try {
     const { submissionId, isApproved, userId } = req.body;
     const submission = await Submission.query().findById(submissionId);
     if (!submission) {
-      return res.status(404).json({ error: 'Submission not found' });
+      return res.status(404).json({ error: "Submission not found" });
     }
     submission.isApproved = isApproved;
-    if(isApproved) {
-       submission.status = 'Approved'; 
+    if (isApproved) {
+      submission.status = "Approved";
       submission.approved_at = formatDateForDB();
-       submission.approved_by = userId
-    }
-    else {
-      submission.status = 'Denied';
+      submission.approved_by = userId;
+    } else {
+      submission.status = "Denied";
     }
     await submission.$query().update();
-    res.status(200).json({ message: 'Submission processed successfully' });
-
-
+    res.status(200).json({ message: "Submission processed successfully" });
   } catch (err) {
-    console.error('Error processing submission:', err);
-    res.status(500).json({ error: 'Failed to process submission' });
+    console.error("Error processing submission:", err);
+    res.status(500).json({ error: "Failed to process submission" });
   }
 };
 
@@ -228,99 +216,102 @@ export const deleteSubmission = async (req, res) => {
     const { submissionId } = req.params;
     const submission = await Submission.query().findById(submissionId);
     if (!submission) {
-      return res.status(404).json({ error: 'Submission not found' });
+      return res.status(404).json({ error: "Submission not found" });
     }
     await submission.$query().delete();
-    res.status(200).json({ message: 'Submission deleted successfully' });
+    res.status(200).json({ message: "Submission deleted successfully" });
   } catch (err) {
-    console.error('Error deleting submission:', err);
-    res.status(500).json({ error: 'Failed to delete submission' });
+    console.error("Error deleting submission:", err);
+    res.status(500).json({ error: "Failed to delete submission" });
   }
-}
+};
 
 export const submitRewardHistory = async (req, res) => {
   try {
-    const { user_email, user_fullname,user_mobilenumber, reward_amount, reward_description, reward_reference_number,submitted_by,submission_id } = req.body;
-    
-   const submission = await Submission.query()
-  .findById(submission_id)
-  .select('isRewarded','isApproved');
+    const {
+      user_email,
+      user_fullname,
+      user_mobilenumber,
+      reward_amount,
+      reward_description,
+      reward_reference_number,
+      submitted_by,
+      submission_id,
+    } = req.body;
 
-if (!submission) {
-  return res.status(404).json({
-    message: 'Submission not found'
-  });
-}
+    const submission = await Submission.query()
+      .findById(submission_id)
+      .select("isRewarded", "isApproved");
 
-if (submission.isRewarded === 1) {
-  return res.status(400).json({
-    message: 'This submission has already been awarded'
-  });
-}
+    if (!submission) {
+      return res.status(404).json({
+        message: "Submission not found",
+      });
+    }
 
-if(submission.isApproved === 0)
-  {
+    if (submission.isRewarded === 1) {
       return res.status(400).json({
-    message: 'This submission is either Pending or Denied'
-  });
-  }
-    
-  
+        message: "This submission has already been awarded",
+      });
+    }
 
-    const file = req.file;  
+    if (submission.isApproved === 0) {
+      return res.status(400).json({
+        message: "This submission is either Pending or Denied",
+      });
+    }
+
+    const file = req.file;
     console.log(req.body);
     const compressedBuffer = await sharp(file.buffer)
       .webp({ quality: 70, effort: 6 }) // balanced: smaller size, still sharp
       .toBuffer();
-    
-              const base64String = compressedBuffer.toString('base64');
-              const dataUri = `data:image/webp;base64,${base64String}`;
-    
-   await RewardHistory.query().insert({
-  user_email,
-  user_fullname,
-  user_mobilenumber,
-  reward_amount,
-  reward_description,
-  reward_receipt: dataUri,
-  reward_reference_number,
-  submitted_by,
-  submission_id
-});
 
-//  const images = await UploadedImage.query().select(
-//       'id',
-//       'filename',
-//       'mime_type',
-//       'image_data',
-//       'image_exif_data'
-//     ).where('user_id', userId);
+    const base64String = compressedBuffer.toString("base64");
+    const dataUri = `data:image/webp;base64,${base64String}`;
 
-   await Submission.query()
-  .findById(submission_id)
-  .patch({
-    isRewarded: true
-  });
+    await RewardHistory.query().insert({
+      user_email,
+      user_fullname,
+      user_mobilenumber,
+      reward_amount,
+      reward_description,
+      reward_receipt: dataUri,
+      reward_reference_number,
+      submitted_by,
+      submission_id,
+    });
 
+    //  const images = await UploadedImage.query().select(
+    //       'id',
+    //       'filename',
+    //       'mime_type',
+    //       'image_data',
+    //       'image_exif_data'
+    //     ).where('user_id', userId);
 
-    res.status(200).json({ message: 'Reward history submitted successfully' });
-        console.log("Sent status:", res.statusCode);
+    await Submission.query().findById(submission_id).patch({
+      isRewarded: true,
+    });
+
+    res.status(200).json({ message: "Reward history submitted successfully" });
+    console.log("Sent status:", res.statusCode);
   } catch (err) {
-    console.error('Error submitting reward history:', err);
-    res.status(500).json({ error: 'Failed to submit reward history' });
-        console.log("Sent status:", res.statusCode);
+    console.error("Error submitting reward history:", err);
+    res.status(500).json({ error: "Failed to submit reward history" });
+    console.log("Sent status:", res.statusCode);
   }
-}
+};
 
 export const getRewardHistory = async (req, res) => {
   try {
     const rewardHistory = await RewardHistory.query();
     res.status(200).json(rewardHistory);
   } catch (err) {
-    console.error('Error fetching reward history:', err);
-    res.status(500).json({ error: 'Failed to fetch reward history' });
+    console.error("Error fetching reward history:", err);
+    res.status(500).json({ error: "Failed to fetch reward history" });
   }
-}
+};
 
 export const resetSubmissionStatusToPending = async (req, res) => {
   try {
@@ -329,7 +320,7 @@ export const resetSubmissionStatusToPending = async (req, res) => {
     // Check if submission exists
     const submission = await Submission.query().findById(submissionId);
     if (!submission) {
-      return res.status(404).json({ error: 'Submission not found' });
+      return res.status(404).json({ error: "Submission not found" });
     }
 
     // Reset fields
@@ -337,10 +328,10 @@ export const resetSubmissionStatusToPending = async (req, res) => {
     submission.isApproved = false;
     submission.approved_at = null;
     submission.approved_by = null;
-    submission.status = 'Pending';
+    submission.status = "Pending";
 
     // Delete all reward history for this submission
-    await RewardHistory.query().delete().where('submissionId', submissionId);
+    await RewardHistory.query().delete().where("submissionId", submissionId);
 
     // Persist changes
     await submission.$query().patch({
@@ -351,10 +342,10 @@ export const resetSubmissionStatusToPending = async (req, res) => {
       status: submission.status,
     });
 
-    res.status(200).json({ message: 'Submission status reset to Pending' });
+    res.status(200).json({ message: "Submission status reset to Pending" });
   } catch (err) {
-    console.error('Error resetting submission status:', err);
-    res.status(500).json({ error: 'Failed to reset submission status' });
+    console.error("Error resetting submission status:", err);
+    res.status(500).json({ error: "Failed to reset submission status" });
   }
 };
 
@@ -366,23 +357,25 @@ export const resetAllSubmissionToPending = async (req, res) => {
       submission.isApproved = false;
       submission.approved_at = null;
       submission.approved_by = null;
-      submission.status = 'Pending';
-      const rewardHistory = await RewardHistory.query().where('submissionId', submission.id);
+      submission.status = "Pending";
+      const rewardHistory = await RewardHistory.query().where(
+        "submissionId",
+        submission.id
+      );
       if (rewardHistory.length > 0) {
         await rewardHistory[0].$query().delete();
       }
       await submission.$query().update();
     }
-    res.status(200).json({ message: 'All submissions reset to Pending' });
+    res.status(200).json({ message: "All submissions reset to Pending" });
   } catch (err) {
-    console.error('Error resetting all submissions:', err);
-    res.status(500).json({ error: 'Failed to reset all submissions' });
+    console.error("Error resetting all submissions:", err);
+    res.status(500).json({ error: "Failed to reset all submissions" });
   }
-}
-
+};
 
 function formatDateForDB(date = new Date()) {
-  const pad = (n) => String(n).padStart(2, '0');
+  const pad = (n) => String(n).padStart(2, "0");
 
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
