@@ -120,7 +120,7 @@ export const getSubmissionsByUserId = async (req, res) => {
         builder.select(
           "id",
           "filename",
-          "mimeTsype",
+          "mimeType",
           "imageData",
           "imageExifData"
         );
