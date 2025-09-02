@@ -11,6 +11,8 @@ import Home from './pages/Home.jsx';
 import Admin from './pages/Admin.jsx';
 import ProtectedRoute from './components/navigation/ProtectedRoute.jsx';
 import Rewards from './pages/Rewards.jsx';
+import ViewInventory from './pages/ViewInventory.jsx';
+import AddInventory from './pages/AddInventory.jsx';
 
 const router = createBrowserRouter([
   {
@@ -50,6 +52,24 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['admin']}>
             <Rewards />
+          </ProtectedRoute>
+        ),
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: '/inventory/view',
+        element: (
+          <ProtectedRoute allowedRoles={['admin']}>
+            <ViewInventory />
+          </ProtectedRoute>
+        ),
+        errorElement: <ErrorPage />,
+      },
+      {
+        path: '/inventory/add',
+        element: (
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AddInventory />
           </ProtectedRoute>
         ),
         errorElement: <ErrorPage />,
