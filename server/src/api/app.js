@@ -8,6 +8,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import cors from "cors";
 import imageRoutes from './routes/imageRoute.js';
 import submissionRoutes from './routes/submissionRoute.js';
+import oohRoutes from './routes/oohRoutes.js';
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use('/api/v1/images', imageRoutes);
 app.use("/api/v1/auth", authRoutes);
 
 app.use('/api/v1/submissions', submissionRoutes);
+
+app.use('/api/v1/ooh', oohRoutes);
 
 // Custom Error Handler
 app.use(errorHandler);
