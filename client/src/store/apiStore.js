@@ -23,7 +23,7 @@ const useApiStore = create((set) => ({
     deleteSubmission: `${BASE_URL}/api/v1/submissions/delete`,
     rewardSubmission: `${BASE_URL}/api/v1/submissions/submitRewardHistory`,
     // OOH
-    getOOH: `${BASE_URL}/api/v1/ooh/getOoh`,
+    getOOH: `${BASE_URL}/api/v1/ooh/`,
     postOOH: `${BASE_URL}/api/v1/ooh/postOOH`,
   },
 }));

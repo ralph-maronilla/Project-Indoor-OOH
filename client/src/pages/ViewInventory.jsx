@@ -13,7 +13,7 @@ const ViewInventory = () => {
 
   const fetchOoh = async () => {
     const response = await getOohData(apiUrls.getOOH, 'GET');
-    return response;
+    return response.data;
   };
   const {
     data: oohData,
