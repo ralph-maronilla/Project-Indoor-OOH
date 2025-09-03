@@ -1,8 +1,12 @@
 import express from 'express';
-import { getOoh } from '../controllers/oohController.js';
+import { getOoh, getOohById, createOoh, updateOoh, deleteOoh } from '../controllers/oohController.js';
 
 const router = express.Router();
 
-router.get('/getOoh', getOoh);
+router.get('/', getOoh);
+router.get('/:id', getOohById);
+router.post('/', createOoh);
+router.put('/:id', updateOoh);
+router.delete('/:id', deleteOoh);
 
 export default router;
