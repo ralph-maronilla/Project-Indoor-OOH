@@ -22,6 +22,9 @@ const useApiStore = create((set) => ({
     postChangeSubmissionStatus: `${BASE_URL}/api/v1/submissions/process`,
     deleteSubmission: `${BASE_URL}/api/v1/submissions/delete`,
     rewardSubmission: `${BASE_URL}/api/v1/submissions/submitRewardHistory`,
+    // OOH
+    getOOH: `${BASE_URL}/api/v1/ooh/getOoh`,
+    postOOH: `${BASE_URL}/api/v1/ooh/postOOH`,
   },
 }));
 

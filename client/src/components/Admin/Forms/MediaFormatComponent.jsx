@@ -183,11 +183,9 @@ const MediaFormatComponent = ({
                 type='submit'
                 size='large'
                 sx={{
-                  background: '#043576',
-                  color: '#fff',
-                  ':hover': {
-                    background: '#043576',
-                  },
+                  background: 'theme.palette.primary.main',
+                  color: 'theme.text.primary',
+
                   marginY: '10px',
                   width: '50%',
                 }}

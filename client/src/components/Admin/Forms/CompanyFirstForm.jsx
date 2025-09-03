@@ -70,8 +70,8 @@ const CompanyFirstForm = ({
               error={touched.media_status && Boolean(errors.media_status)}
               helperText={touched.media_status && errors.media_status}
             >
-              <MenuItem value={'Available'}>Available</MenuItem>
-              <MenuItem value={'Not Available'}>Not Available</MenuItem>
+              <MenuItem value={'Active'}>Active</MenuItem>
+              <MenuItem value={'Inactive'}>Inactive</MenuItem>
               <MenuItem value={'Decommissioned'}>Decommissioned</MenuItem>
             </Select>
           </FormControl>
