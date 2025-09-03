@@ -1,5 +1,5 @@
 import OohInventory from '../models/OOHInventoryTable.js';
-
+import OohGenericDropdown from '../models/OOHGenericDropdown.js';
 
 export async function getOoh(req, res) {
   try {
@@ -30,6 +30,168 @@ export async function getOoh(req, res) {
       success: true,
       data: ooh,
       message: "Fetched all OOH inventory",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+}
+
+export async function getOohDropdowns(req, res) {
+  try {
+    const allData = await OohGenericDropdown.query().select("id", "category", "name");
+
+    if (allData.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {},
+        message: "No dropdown data found",
+      });
+    }
+
+  
+    const grouped = allData.reduce((acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = [];
+      }
+      acc[item.category].push({
+        id: item.id,
+        name: item.name,
+      });
+      return acc;
+    }, {});
+
+    return res.status(200).json({
+      success: true,
+      data: grouped,
+      message: "Fetched dropdown data grouped by category",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+}
+
+
+export async function getOohDropdownsByCategory(req, res) {
+  try {
+    const { category } = req.params;
+    const data = await OohGenericDropdown.query()
+      .select("id", "name")
+      .where("category", category);
+
+    if (data.length === 0) {
+      return res.status(404).json({
+        success: false,
+        data: [],
+        message: `No dropdown data found for category ${category}`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+      message: `Fetched dropdown data for category ${category}`,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+}
+
+/**
+ * Get dropdown value by ID
+ */
+export async function getOohDropdownById(req, res) {
+  try {
+    const { id } = req.params;
+    const data = await OohGenericDropdown.query().findById(id);
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        message: `Dropdown with id ${id} not found`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+      message: "Fetched dropdown by id",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+}
+
+/**
+ * Create new dropdown value
+ */
+export async function createOohDropdown(req, res) {
+  try {
+    const { name, category } = req.body;
+
+    if (!name || !category) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        message: "name and category are required",
+      });
+    }
+
+    const newData = await OohGenericDropdown.query().insert({
+      name,
+      category,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: newData,
+      message: "Dropdown data created successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+}
+
+/**
+ * Delete dropdown value by ID
+ */
+export async function deleteOohDropdown(req, res) {
+  try {
+    const { id } = req.params;
+    const rowsDeleted = await OohGenericDropdown.query().deleteById(id);
+
+    if (rowsDeleted === 0) {
+      return res.status(404).json({
+        success: false,
+        data: null,
+        message: `Dropdown with id ${id} not found`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: null,
+      message: "Dropdown data deleted successfully",
     });
   } catch (err) {
     return res.status(500).json({
