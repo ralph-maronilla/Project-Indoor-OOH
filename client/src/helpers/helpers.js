@@ -24,3 +24,7 @@ export const bufferBase64ToBlobUrl = (dataUrl) => {
     return dataUrl; // fallback to original
   }
 };
+
+export const resetFormFields = (resetForm, initialValues) => {
+  resetForm({ values: initialValues });
+};

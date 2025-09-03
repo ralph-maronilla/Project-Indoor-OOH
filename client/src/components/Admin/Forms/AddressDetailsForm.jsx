@@ -24,88 +24,68 @@ const AddressDetailsForm = ({
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='address_details.street'
-            value={values.address_details.street}
+            name='address.street'
+            value={values.address.street}
             label='Street'
             onChange={handleChange}
-            error={
-              touched?.address_details?.street &&
-              Boolean(errors?.address_details?.street)
-            }
-            helperText={
-              touched?.address_details?.street &&
-              errors?.address_details?.street
-            }
+            error={touched?.address?.street && Boolean(errors?.address?.street)}
+            helperText={touched?.address?.street && errors?.address?.street}
           />
         </Grid>
 
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='address_details.city'
-            value={values.address_details.city}
+            name='address.city'
+            value={values.address.city}
             label='City / Municipality'
             onChange={handleChange}
-            error={
-              touched?.address_details?.city &&
-              Boolean(errors?.address_details?.city)
-            }
-            helperText={
-              touched?.address_details?.city && errors?.address_details?.city
-            }
+            error={touched?.address?.city && Boolean(errors?.address?.city)}
+            helperText={touched?.address?.city && errors?.address?.city}
           />
         </Grid>
 
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='address_details.province'
-            value={values.address_details.province}
+            name='address.province'
+            value={values.address.province}
             label='Province'
             onChange={handleChange}
             error={
-              touched?.address_details?.province &&
-              Boolean(errors?.address_details?.province)
+              touched?.address?.province && Boolean(errors?.address?.province)
             }
-            helperText={
-              touched?.address_details?.province &&
-              errors?.address_details?.province
-            }
+            helperText={touched?.address?.province && errors?.address?.province}
           />
         </Grid>
 
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='address_details.country'
-            value={values.address_details.country}
+            name='address.country'
+            value={values.address.country}
             label='Country'
             onChange={handleChange}
             error={
-              touched?.address_details?.country &&
-              Boolean(errors?.address_details?.country)
+              touched?.address?.country && Boolean(errors?.address?.country)
             }
-            helperText={
-              touched?.address_details?.country &&
-              errors?.address_details?.country
-            }
+            helperText={touched?.address?.country && errors?.address?.country}
           />
         </Grid>
 
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='address_details.country_code'
-            value={values.address_details.country_code}
+            name='address.country_code'
+            value={values.address.country_code}
             label='Country Code'
             onChange={handleChange}
             error={
-              touched?.address_details?.country_code &&
-              Boolean(errors?.address_details?.country_code)
+              touched?.address?.country_code &&
+              Boolean(errors?.address?.country_code)
             }
             helperText={
-              touched?.address_details?.country_code &&
-              errors?.address_details?.country_code
+              touched?.address?.country_code && errors?.address?.country_code
             }
           />
         </Grid>
@@ -113,18 +93,14 @@ const AddressDetailsForm = ({
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='address_details.postalcode'
-            value={values.address_details.postalcode}
+            name='address.postcode'
+            value={values.address.postcode}
             label='Postal Code'
             onChange={handleChange}
             error={
-              touched?.address_details?.postalcode &&
-              Boolean(errors?.address_details?.postalcode)
+              touched?.address?.postcode && Boolean(errors?.address?.postcode)
             }
-            helperText={
-              touched?.address_details?.postalcode &&
-              errors?.address_details?.postalcode
-            }
+            helperText={touched?.address?.postcode && errors?.address?.postcode}
           />
         </Grid>
 
@@ -133,18 +109,14 @@ const AddressDetailsForm = ({
             fullWidth
             multiline
             rows={4}
-            name='address_details.landmark'
-            value={values.address_details.landmark}
+            name='address.landmark'
+            value={values?.address.landmark}
             label='Landmark'
             onChange={handleChange}
             error={
-              touched?.address_details?.landmark &&
-              Boolean(errors?.address_details?.landmark)
+              touched?.address?.landmark && Boolean(errors?.address?.landmark)
             }
-            helperText={
-              touched?.address_details?.landmark &&
-              errors?.address_details?.landmark
-            }
+            helperText={touched?.address?.landmark && errors?.address?.landmark}
           />
         </Grid>
       </Grid>

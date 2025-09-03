@@ -28,41 +28,43 @@ const MediaFormatComponent = ({
   const { apiUrls } = useApiStore();
   const [formData, setFormData] = useState({
     name: '',
+    category: 'media_format',
   });
   const [openDialog, setOpenDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const MediaFormatDropdown = async () => {
-    //   const getMediaFormatDropdownUrl = apiUrls.getAllChannel;
-    //   try {
-    //     const response = await fetch(`${getMediaFormatDropdownUrl}`, {
-    //       method: 'GET',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //       },
-    //       credentials: 'include',
-    //       // body: JSON.stringify(data),
-    //     });
-    //     if (!response.ok) {
-    //       throw new Error('Failed to post data');
-    //     }
-    //     const responseData = await response.json();
-    //     return responseData.data;
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
+    const getMediaFormatDropdownUrl = apiUrls.getOOHDropdowns;
+    try {
+      const response = await fetch(`${getMediaFormatDropdownUrl}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        // body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to post data');
+      }
+      const responseData = await response.json();
+      console.log(responseData);
+      return responseData?.data?.media_format ?? [];
+    } catch (error) {
+      console.log(error);
+    }
   };
-  // const {
-  //   isLoading: mediaFormatDropdownLoading,
-  //   isError: mediaFormatDropdownError,
-  //   isFetching: mediaFormatDropdownFetching,
-  //   data: mediaFormatDropdownData,
-  //   isSuccess: mediaFormatDropdownSuccess,
-  //   refetch: refetchData,
-  // } = useQuery({
-  //   queryKey: ['get-mediaFormat-dropdown'],
-  //   queryFn: MediaFormatDropdown,
-  // });
+  const {
+    isLoading: mediaFormatDropdownLoading,
+    isError: mediaFormatDropdownError,
+    isFetching: mediaFormatDropdownFetching,
+    data: mediaFormatDropdownData,
+    isSuccess: mediaFormatDropdownSuccess,
+    refetch: refetchData,
+  } = useQuery({
+    queryKey: ['get-mediaFormat-dropdown'],
+    queryFn: MediaFormatDropdown,
+  });
 
   const DialogHandleSubmit = async (e) => {
     e.preventDefault();
@@ -84,31 +86,31 @@ const MediaFormatComponent = ({
   };
 
   const postDialogData = async () => {
-    // const addUrl = apiUrls.postChannel;
-    // const response = await fetch(`${addUrl}`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   credentials: 'include',
-    //   body: JSON.stringify(formData),
-    // });
-    // if (!response.ok) {
-    //   throw new Error('Failed to post data');
-    // }
-    // const responseData = await response.json();
-    // return responseData;
+    const addUrl = apiUrls.postOOHDropdowns;
+    const response = await fetch(`${addUrl}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(formData),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to post data');
+    }
+    const responseData = await response.json();
+    return responseData;
   };
-  // const { mutateAsync } = useMutation({
-  //   mutationFn: postDialogData,
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries({
-  //       queryKey: ['get-channel-dropdown'],
+  const { mutateAsync } = useMutation({
+    mutationFn: postDialogData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['get-mediaFormat-dropdown'],
 
-  //       refetchType: 'active',
-  //     });
-  //   },
-  // });
+        refetchType: 'active',
+      });
+    },
+  });
   const handleOpenDialog = () => {
     setOpenDialog(true);
   };
@@ -116,7 +118,7 @@ const MediaFormatComponent = ({
     setOpenDialog(false);
     setFormData({ name: '' });
   };
-  const mediaFormat = ['Static', 'Digital'];
+
   return (
     <>
       <FormControl fullWidth>
@@ -129,14 +131,17 @@ const MediaFormatComponent = ({
           </Button>
         </InputAdornment>
         <Autocomplete
-          freeSolo
           fullWidth
-          // options={mediaTypeDropdownSuccess ? mediaTypeDropdownData : []}
-          options={mediaFormat}
-          // getOptionLabel={(option) => option.name || ''}
-          value={values.media_format || ''} // ✅ fixed field name
+          options={mediaFormatDropdownSuccess ? mediaFormatDropdownData : []}
+          getOptionLabel={(option) => option?.name || ''}
+          value={
+            mediaFormatDropdownData?.find(
+              (item) => item.name === values.media_format
+            ) || null
+          }
           onChange={(event, newValue) => {
-            setFieldValue('media_format', newValue?.name || ''); // ✅ set correct field
+            console.log('newValue', newValue);
+            setFieldValue('media_format', newValue?.name || ''); // ✅ correct field
           }}
           renderInput={(params) => (
             <TextField
