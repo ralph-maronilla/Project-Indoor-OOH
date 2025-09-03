@@ -21,6 +21,7 @@ const Home = () => {
       `${getAllSubmissionsByUserId}/${authUser?.id}`
     );
     const data = await response.json();
+    console.log(data);
 
     return (
       data?.submissions?.map((item) => ({

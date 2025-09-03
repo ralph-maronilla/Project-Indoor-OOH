@@ -15,6 +15,7 @@ import {
   Icon,
   useMediaQuery,
   Button,
+  Collapse,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -22,6 +23,10 @@ import HomeIcon from '@mui/icons-material/Home';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import LoginIcon from '@mui/icons-material/Login';
 import MmsIcon from '@mui/icons-material/Mms';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useApiStore } from '../../store/apiStore';
@@ -31,6 +36,7 @@ const drawerWidth = 240;
 
 function Sidebar({ mode, setMode }) {
   const [open, setOpen] = useState(true);
+  const [openCollapse, setOpenCollapse] = useState(false);
   const apiUrls = useApiStore((state) => state.apiUrls);
   const logout = useAppStateStore((state) => state.logout);
   const authUser = useAppStateStore((state) => state.authUser);
@@ -198,7 +204,51 @@ function Sidebar({ mode, setMode }) {
                 </ListItem>
               </>
             )}
+            <ListItem
+              button
+              onClick={() => setOpenCollapse((prev) => !prev)} // toggle submenu
+              sx={{
+                cursor: 'pointer',
+                backgroundColor: isActive('/inventory')
+                  ? theme.palette.hover.primary
+                  : 'inherit',
+                '&:hover': {
+                  backgroundColor: theme.palette.hover.primary,
+                },
+              }}
+            >
+              <ListItemIcon>
+                <HomeIcon sx={{ color: theme.palette.primary.main }} />
+              </ListItemIcon>
+              <ListItemText primary='OOH Inventory' />
+              {openCollapse ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            {/* Submenus */}
+            <Collapse in={openCollapse} timeout='auto' unmountOnExit>
+              <List component='div' disablePadding>
+                <ListItem
+                  button
+                  sx={{ pl: 4 }}
+                  onClick={() => navigate('/inventory/view')}
+                >
+                  <ListItemIcon>
+                    <ListAltIcon sx={{ color: theme.palette.primary.main }} />
+                  </ListItemIcon>
+                  <ListItemText primary='View All Inventories' />
+                </ListItem>
 
+                <ListItem
+                  button
+                  sx={{ pl: 4 }}
+                  onClick={() => navigate('/inventory/add')}
+                >
+                  <ListItemIcon>
+                    <AddBoxIcon sx={{ color: theme.palette.primary.main }} />
+                  </ListItemIcon>
+                  <ListItemText primary='Add Inventory' />
+                </ListItem>
+              </List>
+            </Collapse>
             <ListItem
               button
               onClick={() => navigate('/')}
