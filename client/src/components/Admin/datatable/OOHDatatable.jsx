@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -14,22 +15,64 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import CustomDialog from '../popups components/CustomDialog';
 
+import EditIcon from '@mui/icons-material/Edit';
+import OOHEditForm from '../Forms/OOHEditForm';
+import { deleteOOHSubmission } from '../../../helpers/postFunctions';
+import { useApiStore } from '../../../store/apiStore';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 const OOHDatatable = ({ data }) => {
   const [openAddressDialog, setOpenAddressDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const queryClient = useQueryClient();
   const [selectedItem, setSelectedItem] = useState(null);
-  console.log(data);
-  const handleOpenAddressDialog = useCallback((item) => {
+  const apiUrls = useApiStore((state) => state.apiUrls);
+
+  const handleOpenDialog = useCallback((item) => {
     setSelectedItem(item);
+
     setOpenAddressDialog(true);
   }, []);
+  const handleOpenEditDialog = useCallback((item) => {
+    setSelectedItem(item);
 
-  const handleCloseAddressDialog = () => {
+    setOpenEditDialog(true);
+  }, []);
+
+  const handleCloseDialog = () => {
     setSelectedItem(null);
     setOpenAddressDialog(false);
   };
+  const handleCloseEditDialog = () => {
+    setSelectedItem(null);
+    setOpenEditDialog(false);
+  };
+  const handleOpenDeleteDialog = useCallback((item) => {
+    setSelectedItem(item);
+    setOpenDeleteDialog(true);
+  }, []);
+  const handleCloseDeleteDialog = () => {
+    setSelectedItem(null);
+    setOpenDeleteDialog(false);
+  };
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteOOHSubmission(apiUrls.deleteOOH, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['fetch-ooh']); // 🔄 refresh the OOH list
+      handleCloseDeleteDialog();
+    },
+    onError: (err) => {
+      console.error('Delete failed:', err);
+      alert('Failed to delete item. Please try again.');
+    },
+  });
+  const handleConfirmDelete = () => {
+    if (selectedItem?.id) {
+      deleteMutation.mutate(selectedItem.id);
+    }
+  };
 
   const rows = useMemo(() => {
-    console.log(data);
     return data?.map((item) => {
       return {
         id: item?.id,
@@ -38,6 +81,8 @@ const OOHDatatable = ({ data }) => {
         mediaStatus: item.mediaStatus || 'N/A',
         mediaType: item.mediaType || 'N/A',
         location: item.location || 'N/A',
+        latitude: item.latitude || 'N/A',
+        longitude: item.longitude || 'N/A',
         address_details: item.address || 'N/A',
         details: item.details || 'N/A',
         dimensions: item.dimensions || 'N/A',
@@ -75,7 +120,7 @@ const OOHDatatable = ({ data }) => {
           <Button
             variant='outlined'
             size='small'
-            onClick={() => handleOpenAddressDialog(params.row.address_details)}
+            onClick={() => handleOpenDialog(params.row.address_details)}
           >
             View Address
           </Button>
@@ -89,7 +134,7 @@ const OOHDatatable = ({ data }) => {
           <Button
             variant='outlined'
             size='small'
-            onClick={() => handleOpenAddressDialog(params.row.details)}
+            onClick={() => handleOpenDialog(params.row.details)}
           >
             View Address
           </Button>
@@ -103,14 +148,40 @@ const OOHDatatable = ({ data }) => {
           <Button
             variant='outlined'
             size='small'
-            onClick={() => handleOpenAddressDialog(params.row.dimensions)}
+            onClick={() => handleOpenDialog(params.row.dimensions)}
           >
             View Address
           </Button>
         ),
       },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 150,
+        renderCell: (params) => (
+          <>
+            <IconButton
+              color='success'
+              size='small'
+              onClick={() => {
+                handleOpenEditDialog(params.row);
+                console.log(params.row);
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton
+              color='error'
+              size='small'
+              onClick={() => handleOpenDeleteDialog(params.row)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </>
+        ),
+      },
     ];
-  }, []);
+  }, [handleOpenDialog]);
 
   // 🔹 Utility to make keys human-readable
   const humanizeKey = (key) => {
@@ -177,10 +248,10 @@ const OOHDatatable = ({ data }) => {
       </Box>
       <CustomDialog
         open={openAddressDialog}
-        onClose={handleCloseAddressDialog}
+        onClose={handleCloseDialog}
         title='Details'
         maxWidth='md'
-        actions={<Button onClick={handleCloseAddressDialog}>Close</Button>}
+        actions={<Button onClick={handleCloseDialog}>Close</Button>}
       >
         {selectedItem ? (
           <Table>
@@ -189,6 +260,39 @@ const OOHDatatable = ({ data }) => {
         ) : (
           <Typography>No data available</Typography>
         )}
+      </CustomDialog>
+      <CustomDialog
+        open={openEditDialog}
+        onClose={handleCloseEditDialog}
+        title='Edit OOH'
+        maxWidth='md'
+        actions={<Button onClick={handleCloseEditDialog}>Close</Button>}
+      >
+        {selectedItem && (
+          <OOHEditForm
+            data={selectedItem}
+            handleCloseDialog={handleCloseEditDialog}
+          />
+        )}
+      </CustomDialog>
+      {/* Delete confirmation */}
+      <CustomDialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        title='Confirm Delete'
+        actions={
+          <>
+            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+            <Button color='error' onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <Typography>
+          Are you sure you want to delete OOH item{' '}
+          <strong>{selectedItem?.id}</strong>?
+        </Typography>
       </CustomDialog>
     </>
   );

@@ -20,7 +20,6 @@ const CompanyFirstForm = ({
   return (
     <>
       <Grid
-        item
         container
         rowSpacing={3}
         columnSpacing={{ xs: 1, sm: 2, md: 3 }}
@@ -59,16 +58,15 @@ const CompanyFirstForm = ({
         </Grid>
         <Grid item size={4}>
           <FormControl fullWidth>
-            <InputLabel id='demo-simple-select-label'>Media Status</InputLabel>
+            <InputLabel id='media_status-label'>Media Status</InputLabel>
             <Select
-              labelId='demo-simple-select-label'
-              id='demo-simple-select'
+              labelId='media_status-label'
+              id='media_status'
               value={values.media_status}
               label='Media Status'
               onChange={handleChange}
               name='media_status'
               error={touched.media_status && Boolean(errors.media_status)}
-              helperText={touched.media_status && errors.media_status}
             >
               <MenuItem value={'Active'}>Active</MenuItem>
               <MenuItem value={'Inactive'}>Inactive</MenuItem>
@@ -79,7 +77,7 @@ const CompanyFirstForm = ({
         <Grid item size={4}>
           <TextField
             fullWidth
-            name='Latitude'
+            name='latitude'
             value={values.latitude}
             label='Latitude'
             onChange={handleChange}
@@ -106,7 +104,6 @@ const CompanyFirstForm = ({
             label='Location'
             onChange={handleChange}
             error={touched.location && Boolean(errors.location)}
-            helperText={touched.location && errors.location}
           />
         </Grid>
       </Grid>
