@@ -17,10 +17,16 @@ import CustomDialog from '../popups components/CustomDialog';
 
 import EditIcon from '@mui/icons-material/Edit';
 import OOHEditForm from '../Forms/OOHEditForm';
+import { deleteOOHSubmission } from '../../../helpers/postFunctions';
+import { useApiStore } from '../../../store/apiStore';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 const OOHDatatable = ({ data }) => {
   const [openAddressDialog, setOpenAddressDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const queryClient = useQueryClient();
   const [selectedItem, setSelectedItem] = useState(null);
+  const apiUrls = useApiStore((state) => state.apiUrls);
 
   const handleOpenDialog = useCallback((item) => {
     setSelectedItem(item);
@@ -41,6 +47,31 @@ const OOHDatatable = ({ data }) => {
     setSelectedItem(null);
     setOpenEditDialog(false);
   };
+  const handleOpenDeleteDialog = useCallback((item) => {
+    setSelectedItem(item);
+    setOpenDeleteDialog(true);
+  }, []);
+  const handleCloseDeleteDialog = () => {
+    setSelectedItem(null);
+    setOpenDeleteDialog(false);
+  };
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteOOHSubmission(apiUrls.deleteOOH, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['fetch-ooh']); // 🔄 refresh the OOH list
+      handleCloseDeleteDialog();
+    },
+    onError: (err) => {
+      console.error('Delete failed:', err);
+      alert('Failed to delete item. Please try again.');
+    },
+  });
+  const handleConfirmDelete = () => {
+    if (selectedItem?.id) {
+      deleteMutation.mutate(selectedItem.id);
+    }
+  };
+
   const rows = useMemo(() => {
     return data?.map((item) => {
       return {
@@ -142,9 +173,7 @@ const OOHDatatable = ({ data }) => {
             <IconButton
               color='error'
               size='small'
-              onClick={() => {
-                console.log(params.row);
-              }}
+              onClick={() => handleOpenDeleteDialog(params.row)}
             >
               <DeleteIcon />
             </IconButton>
@@ -245,6 +274,25 @@ const OOHDatatable = ({ data }) => {
             handleCloseDialog={handleCloseEditDialog}
           />
         )}
+      </CustomDialog>
+      {/* Delete confirmation */}
+      <CustomDialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        title='Confirm Delete'
+        actions={
+          <>
+            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+            <Button color='error' onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <Typography>
+          Are you sure you want to delete OOH item{' '}
+          <strong>{selectedItem?.id}</strong>?
+        </Typography>
       </CustomDialog>
     </>
   );

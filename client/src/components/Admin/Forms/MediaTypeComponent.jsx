@@ -9,169 +9,165 @@ import {
   DialogContentText,
   DialogTitle,
   FormControl,
-  Grid,
+  IconButton,
   InputAdornment,
+  ListItem,
+  ListItemText,
   TextField,
 } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 import { useApiStore } from '../../../store/apiStore';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
-const MediaTypeComponent = ({
-  values,
-  errors,
-  touched,
-  handleBlur,
-  handleChange,
-  setFieldValue,
-}) => {
+// 🔹 API Calls (isolated for clarity)
+const fetchMediaTypes = async (url) => {
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to fetch Media Types');
+  const data = await res.json();
+  return data?.data?.media_type ?? [];
+};
+
+const addMediaType = async ({ url, payload }) => {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to add Media Type');
+  return res.json();
+};
+
+const deleteMediaType = async ({ url, id }) => {
+  const res = await fetch(`${url}/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to delete Media Type');
+  return res.json();
+};
+
+// 🔹 Component
+const MediaTypeComponent = ({ values, errors, touched, setFieldValue }) => {
   const { apiUrls } = useApiStore();
+  const queryClient = useQueryClient();
+  const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     category: 'media_type',
   });
-  const [openDialog, setOpenDialog] = useState(false);
-  const queryClient = useQueryClient();
 
-  const MediaTypeDropdown = async () => {
-    const getMediaTypeDropdownUrl = apiUrls.getOOHDropdowns;
-    try {
-      const response = await fetch(`${getMediaTypeDropdownUrl}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        // body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to post data');
-      }
-      const responseData = await response.json();
-      console.log(responseData);
-      return responseData?.data?.media_type ?? [];
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const {
-    isLoading: mediaTypeDropdownLoading,
-    isError: mediaTypeDropdownError,
-    isFetching: mediaTypeDropdownFetching,
-    data: mediaTypeDropdownData,
-    isSuccess: mediaTypeDropdownSuccess,
-    refetch: refetchData,
-  } = useQuery({
-    queryKey: ['get-mediaType-dropdown'],
-    queryFn: MediaTypeDropdown,
+  // Fetch Media Types
+  const { data: mediaTypes = [], isSuccess } = useQuery({
+    queryKey: ['media-types'],
+    queryFn: () => fetchMediaTypes(apiUrls.getOOHDropdowns),
   });
 
-  const DialogHandleSubmit = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const response = await mutateAsync(formData);
-      if (response.success) {
-        toast.success('Add Media Type Successful', {
-          duration: 4000, // Duration in milliseconds
-          position: 'top-right', // Position of the toast
-        });
+  // Add Media Type
+  const { mutateAsync: addMediaTypeMutation } = useMutation({
+    mutationFn: (payload) =>
+      addMediaType({ url: apiUrls.postOOHDropdowns, payload }),
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success('Media Type added successfully!');
+        queryClient.invalidateQueries(['media-types']);
         handleCloseDialog();
-        refetchData();
       }
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const postDialogData = async () => {
-    const addUrl = apiUrls.postOOHDropdowns;
-    const response = await fetch(`${addUrl}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(formData),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to post data');
-    }
-    const responseData = await response.json();
-    return responseData;
-  };
-  const { mutateAsync } = useMutation({
-    mutationFn: postDialogData,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['get-mediaType-dropdown'],
-
-        refetchType: 'active',
-      });
     },
+    onError: () => toast.error('Failed to add Media Type'),
   });
-  const handleOpenDialog = () => {
-    setOpenDialog(true);
-  };
+
+  // Delete Media Type
+  const { mutate: deleteMediaTypeMutation } = useMutation({
+    mutationFn: (id) =>
+      deleteMediaType({ url: apiUrls.deleteOOHDropdowns, id }),
+    onSuccess: (data) => {
+      toast.success(data.message || 'Deleted successfully!');
+      queryClient.invalidateQueries(['media-types']);
+    },
+    onError: () => toast.error('Failed to delete Media Type'),
+  });
+
+  // Handlers
+  const handleOpenDialog = () => setOpenDialog(true);
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setFormData({ name: '' });
+    setFormData({ name: '', category: 'media_type' });
+  };
+
+  const handleDialogSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await addMediaTypeMutation(formData);
   };
 
   return (
     <>
+      {/* Dropdown with Add + Delete */}
       <FormControl fullWidth>
         <InputAdornment
           position='end'
           sx={{ position: 'absolute', right: 0, top: -30 }}
         >
           <Button onClick={handleOpenDialog} size='small'>
-            +Add New
+            + Add New
           </Button>
         </InputAdornment>
+
         <Autocomplete
-          freeSolo
           fullWidth
-          options={mediaTypeDropdownSuccess ? mediaTypeDropdownData : []}
-          // options={mediaTypes}
+          options={isSuccess ? mediaTypes : []}
           getOptionLabel={(option) => option?.name || ''}
-          values={values.media_type || ''}
-          // value={
-          //   mediaTypeDropdownData?.find(
-          //     (item) => item?.name === values?.media_type
-          //   ) || null
-          // }
+          value={
+            mediaTypes.find((item) => item.name === values.media_type) || null
+          }
           onChange={(event, newValue) => {
-            console.log('newValue', newValue);
-            setFieldValue('media_type', newValue.name || ''); // ✅ set correct field
+            setFieldValue('media_type', newValue?.name || '');
           }}
           renderInput={(params) => (
             <TextField
               {...params}
-              fullWidth
               label='Media Type'
               variant='outlined'
               error={touched.media_type && Boolean(errors.media_type)}
               helperText={touched.media_type && errors.media_type}
             />
           )}
+          renderOption={(props, option) => (
+            <ListItem {...props} key={option.id}>
+              <ListItemText primary={option.name} />
+              <IconButton
+                edge='end'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteMediaTypeMutation(option.id);
+                }}
+              >
+                <ClearIcon sx={{ color: 'red' }} />
+              </IconButton>
+            </ListItem>
+          )}
         />
       </FormControl>
 
+      {/* Add New Dialog */}
       <Dialog
         onClose={handleCloseDialog}
         open={openDialog}
-        fullWidth={true}
+        fullWidth
         maxWidth='sm'
       >
         <DialogTitle>Add Media Type</DialogTitle>
-
         <DialogContent>
-          <DialogContentText>Fill up the fields</DialogContentText>
-
-          <form onSubmit={DialogHandleSubmit}>
-            <Box sx={{ display: 'flex', flexDirection: 'Column' }}>
+          <DialogContentText>Fill in the field below</DialogContentText>
+          <form onSubmit={handleDialogSubmit}>
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <TextField
                 type='text'
                 name='name'
@@ -179,24 +175,13 @@ const MediaTypeComponent = ({
                 sx={{ marginY: '10px', width: '38ch' }}
                 value={formData.name}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    name: e.target.value,
-                  })
+                  setFormData({ ...formData, name: e.target.value })
                 }
               />
-
               <Button
                 variant='contained'
                 type='submit'
-                size='large'
-                sx={{
-                  background: 'theme.palette.primary.main',
-                  color: 'theme.text.primary',
-
-                  marginY: '10px',
-                  width: '50%',
-                }}
+                sx={{ mt: 2, width: '50%' }}
               >
                 Submit
               </Button>

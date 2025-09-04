@@ -42,24 +42,24 @@ const AddInventory = () => {
   const handleInventorySubmit = async (values, { resetForm }) => {
     try {
       console.log('form submitted', values);
-      // await mutation.mutateAsync(values, {
-      //   onSuccess: (data) => {
-      //     console.log('✅ Success:', data);
-      //     toast.success(`${data.message}`);
+      await mutation.mutateAsync(values, {
+        onSuccess: (data) => {
+          console.log('✅ Success:', data);
+          toast.success(`${data.message}`);
 
-      //     // reset the form after success
-      //     resetForm();
+          // reset the form after success
+          resetForm();
 
-      //     queryClient.invalidateQueries(['fetch-ooh']);
-      //   },
-      //   /**
-      //    * Error callback when mutation fails.
-      //    * @param {Error} error The error object that was thrown.
-      //    */
-      //   onError: (error) => {
-      //     console.error('❌ Error:', error);
-      //   },
-      // });
+          queryClient.invalidateQueries(['fetch-ooh']);
+        },
+        /**
+         * Error callback when mutation fails.
+         * @param {Error} error The error object that was thrown.
+         */
+        onError: (error) => {
+          console.error('❌ Error:', error);
+        },
+      });
     } catch (error) {
       console.log(error);
     }
@@ -84,7 +84,7 @@ const AddInventory = () => {
           height: '100%',
         }}
       >
-        <Typography variant='h1'>Add Inventory</Typography>
+        <Typography variant='h1'>Add OOH Inventory</Typography>
         <Box sx={{ marginTop: '50px' }}>
           <Formik
             initialValues={OOH_INITIAL_VALUES}

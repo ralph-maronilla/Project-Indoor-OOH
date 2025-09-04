@@ -111,3 +111,13 @@ export const editOOHSubmission = async (url, id, payload) => {
     throw error;
   }
 };
+
+export const deleteOOHSubmission = async (url, id) => {
+  const res = await fetch(`${url}/${id}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to delete Media Type');
+  return res.json();
+};

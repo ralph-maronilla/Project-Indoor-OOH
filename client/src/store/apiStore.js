@@ -23,11 +23,13 @@ const useApiStore = create((set) => ({
     deleteSubmission: `${BASE_URL}/api/v1/submissions/delete`,
     rewardSubmission: `${BASE_URL}/api/v1/submissions/submitRewardHistory`,
     // OOH
-    getOOH: `${BASE_URL}/api/v1/ooh/`,
-    createOOH: `${BASE_URL}/api/v1/ooh/`,
+    getOOH: `${BASE_URL}/api/v1/ooh`,
+    createOOH: `${BASE_URL}/api/v1/ooh`,
     editOOH: `${BASE_URL}/api/v1/ooh/`,
+    deleteOOH: `${BASE_URL}/api/v1/ooh`,
     getOOHDropdowns: `${BASE_URL}/api/v1/ooh/dropdowns`,
     postOOHDropdowns: `${BASE_URL}/api/v1/ooh/dropdowns`,
+    deleteOOHDropdowns: `${BASE_URL}/api/v1/ooh/dropdowns`,
   },
 }));
 
