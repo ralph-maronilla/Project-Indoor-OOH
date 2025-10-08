@@ -26,7 +26,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
+         "http://localhost:5173",
       "http://portal.davidandgolyat.com:7110",
       "http://portal.davidandgolyat.com:7110/",
       "http://portal.davidandgolyat.com:7163/",
