@@ -2,6 +2,193 @@ import Submission from "../models/Submission.js";
 import User from "../models/User.js";
 import RewardHistory from "../models/RewardHistory.js";
 import sharp from "sharp";
+// export const getSubmissions = async (req, res) => {
+//   try {
+//     const submissions = await Submission.query()
+//       .select("id", "isApproved", "isRewarded", "status", "submitted_by")
+//       .withGraphFetched("images")
+//       .modifyGraph("images", (builder) => {
+//         builder.select(
+//           "id",
+//           "filename",
+//           "mime_type",
+//           "image_data",
+//           "image_exif_data"
+//         );
+//       });
+
+//     const user = await User.query().findById(submissions[0].submittedBy);
+
+//     const userImage = user.userImage;
+
+//     const mappedUser = {
+//       name: user.name,
+//       email: user.email,
+//       mobile_number: user.mobileNumber,
+//       first_name: user.firstName,
+//       last_name: user.lastName,
+//       role: user.role,
+//       user_image: userImage,
+//     };
+
+//     const formatted = await Promise.all(
+//       submissions.map(async (sub) => {
+//         const user = await User.query().findById(sub.submittedBy);
+
+//         const rewarded = await RewardHistory.query()
+//           .where("submission_id", sub.id)
+//           .first();
+//         let formattedUser = null;
+//         if (rewarded) {
+//           formattedUser = {
+//             id: user.id,
+//             name: user.name,
+//             email: user.email,
+//             mobile_number: user.mobileNumber,
+//             first_name: user.firstName,
+//             last_name: user.lastName,
+//             role: user.role,
+//             reward_details: rewarded,
+//             images: sub.images.map((img) => ({
+//               id: img.id,
+//               filename: img.filename,
+//               exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+//               imageBase64: img.imageData
+//                 ? `data:${img.mimeType};base64,${img.imageData}`
+//                 : null,
+//             })),
+//           };
+//         } else {
+//           formattedUser = {
+//             id: user.id,
+//             name: user.name,
+//             email: user.email,
+//             mobile_number: user.mobileNumber,
+//             first_name: user.firstName,
+//             last_name: user.lastName,
+//             role: user.role,
+//             images: sub.images.map((img) => ({
+//               id: img.id,
+//               filename: img.filename,
+//               exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+//               imageBase64: img.imageData
+//                 ? `data:${img.mimeType};base64,${img.imageData}`
+//                 : null,
+//             })),
+//           };
+//         }
+
+//         return {
+//           id: sub.id,
+//           submitted_by: formattedUser,
+//           isApproved: sub.isApproved,
+//           isRewarded: sub.isRewarded,
+//           status: sub.status,
+//           images: sub.images.map((img) => ({
+//             id: img.id,
+//             filename: img.filename,
+//             exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+//             imageBase64: img.imageData
+//               ? `data:${img.mimeType};base64,${img.imageData}`
+//               : null,
+//           })),
+//         };
+//       })
+//     );
+
+//     res.status(200).json({
+//       message: "Submissions retrieved successfully.",
+//       data: formatted,
+//     });
+//   } catch (err) {
+//     console.error("Error fetching submissions:", err);
+//     res.status(500).json({ error: "Failed to fetch submissions" });
+//   }
+// };
+
+// export const getSubmissionsByUserId = async (req, res) => {
+//   try {
+//     const { userId } = req.params;
+//     console.log(userId);
+
+//     // Fetch all submissions for a given user
+//     const submissions = await Submission.query()
+//       .where("submittedBy", userId)
+//       .select("id", "isApproved", "isRewarded", "status", "submitted_by")
+//       .withGraphFetched("images")
+//       .modifyGraph("images", (builder) => {
+//         builder.select(
+//           "id",
+//           "filename",
+//           "mimeType",
+//           "imageData",
+//           "imageExifData"
+//         );
+//       });
+
+//     if (!submissions || submissions.length === 0) {
+//       return res.status(200).json({
+//         success: true,
+//         data: [],
+//         message: "No submissions found",
+//       });
+//     }
+
+//     // Fetch user once (not inside map)
+//     const user = await User.query().findById(userId);
+
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Format all submissions
+//     const formatted = await Promise.all(
+//       submissions.map(async (sub) => {
+//         const rewarded = await RewardHistory.query()
+//           .where("submission_id", sub.id)
+//           .first();
+
+//         return {
+//           id: sub.id,
+//           status: sub.status,
+//           isApproved: sub.isApproved,
+//           isRewarded: sub.isRewarded,
+//           reward_details: rewarded || null,
+//           images: sub.images.map((img) => ({
+//             id: img.id,
+//             filename: img.filename,
+//             exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+//             imageBase64: img.imageData
+//               ? `data:${img.mimeType};base64,${img.imageData}`
+//               : null,
+//           })),
+//         };
+//       })
+//     );
+
+//     // Final response structure
+//     const response = {
+//       user: {
+//         id: user.id,
+//         name: user.name,
+//         email: user.email,
+//         mobile_number: user.mobileNumber,
+//         first_name: user.firstName,
+//         last_name: user.lastName,
+//         role: user.role,
+//         user_image: user.userImage,
+//       },
+//       submissions: formatted,
+//     };
+
+//     return res.status(200).json(response);
+//   } catch (err) {
+//     console.error("Error fetching submissions:", err);
+//     return res.status(500).json({ error: "Failed to fetch submissions" });
+//   }
+// };
+
+
 export const getSubmissions = async (req, res) => {
   try {
     const submissions = await Submission.query()
@@ -17,88 +204,64 @@ export const getSubmissions = async (req, res) => {
         );
       });
 
-    const user = await User.query().findById(submissions[0].submittedBy);
+    // 🧠 Handle empty submissions table
+    if (!submissions || submissions.length === 0) {
+      return res.status(200).json({
+        message: "No submissions found",
+        data: [],
+      });
+    }
 
-    const userImage = user.userImage;
-
-    const mappedUser = {
-      name: user.name,
-      email: user.email,
-      mobile_number: user.mobileNumber,
-      first_name: user.firstName,
-      last_name: user.lastName,
-      role: user.role,
-      user_image: userImage,
-    };
-
+    // 🧠 Format submissions
     const formatted = await Promise.all(
       submissions.map(async (sub) => {
-        const user = await User.query().findById(sub.submittedBy);
+        // Fetch user safely
+        const user = await User.query().findById(sub.submitted_by);
+        if (!user) return null;
 
+        // Fetch reward info if any
         const rewarded = await RewardHistory.query()
           .where("submission_id", sub.id)
           .first();
-        let formattedUser = null;
-        if (rewarded) {
-          formattedUser = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            mobile_number: user.mobileNumber,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            role: user.role,
-            reward_details: rewarded,
-            images: sub.images.map((img) => ({
-              id: img.id,
-              filename: img.filename,
-              exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
-              imageBase64: img.imageData
-                ? `data:${img.mimeType};base64,${img.imageData}`
-                : null,
-            })),
-          };
-        } else {
-          formattedUser = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            mobile_number: user.mobileNumber,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            role: user.role,
-            images: sub.images.map((img) => ({
-              id: img.id,
-              filename: img.filename,
-              exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
-              imageBase64: img.imageData
-                ? `data:${img.mimeType};base64,${img.imageData}`
-                : null,
-            })),
-          };
-        }
 
+        // Map image data
+        const images = sub.images.map((img) => ({
+          id: img.id,
+          filename: img.filename,
+          exif: img.image_exif_data ? JSON.parse(img.image_exif_data) : null,
+          imageBase64: img.image_data
+            ? `data:${img.mime_type};base64,${img.image_data}`
+            : null,
+        }));
+
+        // Build structured response
         return {
           id: sub.id,
-          submitted_by: formattedUser,
+          submitted_by: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            mobile_number: user.mobileNumber,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            role: user.role,
+            user_image: user.userImage,
+            reward_details: rewarded || null,
+          },
           isApproved: sub.isApproved,
           isRewarded: sub.isRewarded,
           status: sub.status,
-          images: sub.images.map((img) => ({
-            id: img.id,
-            filename: img.filename,
-            exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
-            imageBase64: img.imageData
-              ? `data:${img.mimeType};base64,${img.imageData}`
-              : null,
-          })),
+          images,
         };
       })
     );
 
+    // Remove nulls from missing users
+    const cleanedData = formatted.filter(Boolean);
+
     res.status(200).json({
       message: "Submissions retrieved successfully.",
-      data: formatted,
+      data: cleanedData,
     });
   } catch (err) {
     console.error("Error fetching submissions:", err);
@@ -109,44 +272,51 @@ export const getSubmissions = async (req, res) => {
 export const getSubmissionsByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log(userId);
 
-    // Fetch all submissions for a given user
+    // Fetch all submissions for the given user
     const submissions = await Submission.query()
-      .where("submittedBy", userId)
+      .where("submitted_by", userId)
       .select("id", "isApproved", "isRewarded", "status", "submitted_by")
       .withGraphFetched("images")
       .modifyGraph("images", (builder) => {
         builder.select(
           "id",
           "filename",
-          "mimeType",
-          "imageData",
-          "imageExifData"
+          "mime_type",
+          "image_data",
+          "image_exif_data"
         );
       });
 
+    // 🧠 Handle no submissions
     if (!submissions || submissions.length === 0) {
       return res.status(200).json({
-        success: true,
+        message: "No submissions found for this user.",
         data: [],
-        message: "No submissions found",
       });
     }
 
-    // Fetch user once (not inside map)
+    // Fetch the user once
     const user = await User.query().findById(userId);
-
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Format all submissions
+    // 🧠 Format submissions
     const formatted = await Promise.all(
       submissions.map(async (sub) => {
         const rewarded = await RewardHistory.query()
           .where("submission_id", sub.id)
           .first();
+
+        const images = sub.images.map((img) => ({
+          id: img.id,
+          filename: img.filename,
+          exif: img.image_exif_data ? JSON.parse(img.image_exif_data) : null,
+          imageBase64: img.image_data
+            ? `data:${img.mime_type};base64,${img.image_data}`
+            : null,
+        }));
 
         return {
           id: sub.id,
@@ -154,19 +324,12 @@ export const getSubmissionsByUserId = async (req, res) => {
           isApproved: sub.isApproved,
           isRewarded: sub.isRewarded,
           reward_details: rewarded || null,
-          images: sub.images.map((img) => ({
-            id: img.id,
-            filename: img.filename,
-            exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
-            imageBase64: img.imageData
-              ? `data:${img.mimeType};base64,${img.imageData}`
-              : null,
-          })),
+          images,
         };
       })
     );
 
-    // Final response structure
+    // 🧠 Construct final structured response
     const response = {
       user: {
         id: user.id,
@@ -187,6 +350,7 @@ export const getSubmissionsByUserId = async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch submissions" });
   }
 };
+
 
 export const processSubmission = async (req, res) => {
   try {
