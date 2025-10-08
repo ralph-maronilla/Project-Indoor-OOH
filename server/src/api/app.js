@@ -31,6 +31,8 @@ app.use(
       "http://portal.davidandgolyat.com:7110/",
       "http://portal.davidandgolyat.com:7163/",
       "http://13.229.21.195:7163/",
+          "http://portal.davidandgolyat.com:7108/",
+      "http://13.229.21.195:7108/",
     ],
     credentials: true,
     exposedHeaders: ["Content-Disposition", "Content-Type"],
