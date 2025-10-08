@@ -1,4 +1,3 @@
-import dotenv from 'dotenv';
 import http from 'http';
 import path from 'path';
 require("dotenv").config({ path: path.join(__dirname, "../", "../", ".env") });
