@@ -318,9 +318,9 @@ export const getSubmissions = async (req, res) => {
         const images = sub.images.map((img) => ({
           id: img.id,
           filename: img.filename,
-          exif: img.image_exif_data ? JSON.parse(img.image_exif_data) : null,
-          imageBase64: img.image_data
-            ? `data:${img.mime_type};base64,${img.image_data}`
+          exif: img.imageExifData ? JSON.parse(img.imageExifData) : null,
+          imageBase64: img.imageData
+            ? `data:${img.mimeType};base64,${img.imageData}`
             : null,
         }));
 
