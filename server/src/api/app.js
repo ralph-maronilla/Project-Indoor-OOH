@@ -6,9 +6,9 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import cors from "cors";
-import imageRoutes from './routes/imageRoute.js';
-import submissionRoutes from './routes/submissionRoute.js';
-import oohRoutes from './routes/oohRoutes.js';
+import imageRoutes from "./routes/imageRoute.js";
+import submissionRoutes from "./routes/submissionRoute.js";
+import oohRoutes from "./routes/oohRoutes.js";
 
 const app = express();
 
@@ -26,7 +26,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(
   cors({
     origin: [
-         "http://localhost:5173",
+      "http://localhost:5173",
+      "http://localhost:5174",
       "http://portal.davidandgolyat.com:7110",
       "http://portal.davidandgolyat.com:7110/",
       "http://portal.davidandgolyat.com:7163/",
@@ -40,15 +41,14 @@ app.use(
 );
 app.options("*", cors());
 
-
 // Routes
-app.use('/api/v1/images', imageRoutes);
+app.use("/api/v1/images", imageRoutes);
 
 app.use("/api/v1/auth", authRoutes);
 
-app.use('/api/v1/submissions', submissionRoutes);
+app.use("/api/v1/submissions", submissionRoutes);
 
-app.use('/api/v1/ooh', oohRoutes);
+app.use("/api/v1/ooh", oohRoutes);
 
 // Custom Error Handler
 app.use(errorHandler);
