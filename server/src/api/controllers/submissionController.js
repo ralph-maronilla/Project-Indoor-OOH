@@ -288,7 +288,8 @@ export const getSubmissions = async (req, res) => {
           "image_exif_data"
         );
       });
-
+   
+       console.log(submissions);
     // 🧠 Handle empty submissions
     if (!submissions || submissions.length === 0) {
       return res.status(200).json({
@@ -301,10 +302,11 @@ export const getSubmissions = async (req, res) => {
     const formatted = await Promise.all(
       submissions.map(async (sub) => {
         // ✅ Skip if submitted_by is missing
-        if (!sub.submitted_by) return null;
+
+        if (!sub.submittedBy) return null;
 
         // Fetch user safely
-        const user = await User.query().findById(sub.submitted_by);
+        const user = await User.query().findById(sub.submittedBy);
         if (!user) return null;
 
         // Fetch reward info if any
