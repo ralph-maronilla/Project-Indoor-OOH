@@ -189,6 +189,91 @@ import sharp from "sharp";
 // };
 
 
+// export const getSubmissions = async (req, res) => {
+//   try {
+//     const submissions = await Submission.query()
+//       .select("id", "isApproved", "isRewarded", "status", "submitted_by")
+//       .withGraphFetched("images")
+//       .modifyGraph("images", (builder) => {
+//         builder.select(
+//           "id",
+//           "filename",
+//           "mime_type",
+//           "image_data",
+//           "image_exif_data"
+//         );
+//       });
+
+//     // 🧠 Handle empty submissions table
+//     if (!submissions || submissions.length === 0) {
+//       return res.status(200).json({
+//         message: "No submissions found",
+//         data: [],
+//       });
+//     }
+
+//     if(sub.submitted_by)
+//       {
+
+//       }
+
+//     // 🧠 Format submissions
+//     const formatted = await Promise.all(
+//       submissions.map(async (sub) => {
+//         // Fetch user safely
+//         const user = await User.query().findById(sub.submitted_by);
+//         if (!user) return null;
+
+//         // Fetch reward info if any
+//         const rewarded = await RewardHistory.query()
+//           .where("submission_id", sub.id)
+//           .first();
+
+//         // Map image data
+//         const images = sub.images.map((img) => ({
+//           id: img.id,
+//           filename: img.filename,
+//           exif: img.image_exif_data ? JSON.parse(img.image_exif_data) : null,
+//           imageBase64: img.image_data
+//             ? `data:${img.mime_type};base64,${img.image_data}`
+//             : null,
+//         }));
+
+//         // Build structured response
+//         return {
+//           id: sub.id,
+//           submitted_by: {
+//             id: user.id,
+//             name: user.name,
+//             email: user.email,
+//             mobile_number: user.mobileNumber,
+//             first_name: user.firstName,
+//             last_name: user.lastName,
+//             role: user.role,
+//             user_image: user.userImage,
+//             reward_details: rewarded || null,
+//           },
+//           isApproved: sub.isApproved,
+//           isRewarded: sub.isRewarded,
+//           status: sub.status,
+//           images,
+//         };
+//       })
+//     );
+
+//     // Remove nulls from missing users
+//     const cleanedData = formatted.filter(Boolean);
+
+//     res.status(200).json({
+//       message: "Submissions retrieved successfully.",
+//       data: cleanedData,
+//     });
+//   } catch (err) {
+//     console.error("Error fetching submissions:", err);
+//     res.status(500).json({ error: "Failed to fetch submissions" });
+//   }
+// };
+
 export const getSubmissions = async (req, res) => {
   try {
     const submissions = await Submission.query()
@@ -204,7 +289,7 @@ export const getSubmissions = async (req, res) => {
         );
       });
 
-    // 🧠 Handle empty submissions table
+    // 🧠 Handle empty submissions
     if (!submissions || submissions.length === 0) {
       return res.status(200).json({
         message: "No submissions found",
@@ -215,6 +300,9 @@ export const getSubmissions = async (req, res) => {
     // 🧠 Format submissions
     const formatted = await Promise.all(
       submissions.map(async (sub) => {
+        // ✅ Skip if submitted_by is missing
+        if (!sub.submitted_by) return null;
+
         // Fetch user safely
         const user = await User.query().findById(sub.submitted_by);
         if (!user) return null;
@@ -256,7 +344,7 @@ export const getSubmissions = async (req, res) => {
       })
     );
 
-    // Remove nulls from missing users
+    // 🧹 Remove nulls from missing users
     const cleanedData = formatted.filter(Boolean);
 
     res.status(200).json({
@@ -268,6 +356,7 @@ export const getSubmissions = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch submissions" });
   }
 };
+
 
 export const getSubmissionsByUserId = async (req, res) => {
   try {
